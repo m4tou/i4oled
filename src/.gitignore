@@ -1,0 +1,5 @@
+.deps/
+Makefile
+Makefile.in
+i4oled
+i4oled.o
