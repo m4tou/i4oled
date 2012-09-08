@@ -5,9 +5,10 @@
 
 #define VER "0.1"
 
-static int wacom_read_image(const char *filename, char image[1024])
+static int wacom_read_image(const char *filename, unsigned char image[1024])
 {
 	char header[8];
+	unsigned char lo, hi;
 	int retval;
 	int length = 1024;
 	int x, y, ret;
@@ -64,7 +65,14 @@ static int wacom_read_image(const char *filename, char image[1024])
         color_type = png_get_color_type(png_ptr, info_ptr);
         bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 
-        number_of_passes = png_set_interlace_handling(png_ptr);
+	/* Expected format:
+	 * 	width = 64, height = 32
+	 * 	color_type = 6 (RGBA)
+	 * 	bit_depth = 8
+	 */
+/*FIX ME Add check*/
+
+//        number_of_passes = png_set_interlace_handling(png_ptr);
         png_read_update_info(png_ptr, info_ptr);
 
         if (setjmp(png_jmpbuf(png_ptr))) {
@@ -79,29 +87,31 @@ static int wacom_read_image(const char *filename, char image[1024])
 
         png_read_image(png_ptr, row_pointers);
 	png_set_strip_16(png_ptr);
-	//png_set_strip_alpha(png_ptr);
 	png_set_packing(png_ptr);
-//	      png_set_expand(png_ptr);
 
         for (y = 0; y < height; y++) {
                 png_byte* row = row_pointers[y];
-                for (x = 0; x < width; x++) {
-                        png_byte* ptr = &(row[x * 4]);
-			image[(32 * y) + x] = ptr[0];
+                for (x = 0; x < width ; x++) {
+                        png_byte* ptr = &(row[x * 8]);
+			hi = ptr[0];
+			hi = 0xf0 & hi;
+			lo = ptr[4] >> 4;
+			image[(32 * y) + x] = hi | lo;
                 }
         }
+
 out:
         fclose(fd);
 	return ret;
 }
 
 
-static int wacom_oled_write(const char *filename, char image[1024])
+static int wacom_oled_write(const char *filename, unsigned char image[1024])
 {
 	int retval;
 	int length = 1024;
 	int fd = -1;
-	int ret;
+	int x, ret;
 
 	fd = open (filename , O_WRONLY);
 	if (fd < 0) {
@@ -122,18 +132,24 @@ out:
 	return ret;
 }
 
-static void scramble(char image[1024])
+static void scramble(unsigned char image[1024])
 {
-        char buf[1024];
+        unsigned char buf[1024];
         int x, y, i;
+	unsigned char l1,l2,h1,h2;
 
         for (i = 0; i < 1024; i++)
                 buf[i] = image[i];
 
         for (y = 0; y < 16; y++) {
                 for (x = 0; x < 32; x++) {
-                        image[(2 * x) + (64 * y)] = (0xF0 & (buf[63 - x + 64 * y] << 4)) | (0x0F & (buf[31 - x + 64 * y]));
-                        image[(2 * x) + 1 + (64 * y)] = (0xF0 & buf[63 - x + 64 * y]) | (0x0F & (buf[31 - x + 64 * y] >> 4));
+			l1 = (0x0F & (buf[31 - x + 64 * y]));
+			l2 = (0x0F & (buf[31 - x + 64 * y] >> 4));
+			h1 = (0xF0 & (buf[63 - x + 64 * y] << 4));
+			h2 = (0xF0 & (buf[63 - x + 64 * y]));
+
+                        image[(2 * x) + (64 * y)] = h1 | l1;
+                        image[(2 * x) + 1 + (64 * y)] = h2 | l2;
                 }
         }
 }
@@ -165,7 +181,7 @@ int main (int argc, char **argv)
 	int scramble_image;
 	char* filename;
 	char* image_filename;
-	char image[1024];
+	unsigned char image[1024];
 
 	struct option options[] = {
 		{"help", 0, NULL, 0},
