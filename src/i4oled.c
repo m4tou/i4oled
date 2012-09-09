@@ -179,7 +179,7 @@ static void usage(void)
 
 	printf(
 	"\ndevice - path to OLED sysfs entry (button[No]_rawimg) i.e /sys/bus/usb/drivers/wacom/3-1.2:1.0/wacom_led/button0_rawimg\n"
-	"image  - image file, has to be 1024 bytes long\n");
+	"image  - PNG image file, has to be 64 x 32, 8-bit/color RGBA, non-interlaced \n");
 }
 
 int main (int argc, char **argv)
