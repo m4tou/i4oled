@@ -11,7 +11,8 @@ static int wacom_read_image(const char *filename, unsigned char image[1024])
 	unsigned char lo, hi;
 	int retval;
 	int length = 1024;
-	int x, y, ret;
+	int x, y;
+	int ret = 0;
 	int width, height;
 	png_byte color_type;
 	png_byte bit_depth;
@@ -244,7 +245,6 @@ int main (int argc, char **argv)
 
 	if (scramble_image) 
 		scramble(image);
-
 	ret = wacom_oled_write(filename, image);
 out:
 	return ret;
