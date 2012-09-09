@@ -65,20 +65,20 @@ static int wacom_read_image(const char *filename, unsigned char image[1024])
         color_type = png_get_color_type(png_ptr, info_ptr);
         bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 
-	/* Expected format:
-	 * 	width = 64, height = 32
-	 * 	color_type = 6 (RGBA)
-	 * 	bit_depth = 8
-	 */
-/*FIX ME Add check*/
-
 	if (width != 64 || height !=32) {
 		ret = 1;
                 printf("Invalid image size: %dx%d, but expecting 64x32\n", width, height);
 		goto out;
 	}
 
-//        number_of_passes = png_set_interlace_handling(png_ptr);
+	if (color_type != 6 || bit_depth !=8) {
+		ret = 1;
+                printf("Invalid color type or bit depth, please use RGBA 8-bit png\n"
+			"Use 'file' command on the icon. Expected result:\n"
+			"PNG image data, 64 x 32, 8-bit/color RGBA, non-interlaced\n");
+		goto out;
+	}
+
         png_read_update_info(png_ptr, info_ptr);
 
         if (setjmp(png_jmpbuf(png_ptr))) {
