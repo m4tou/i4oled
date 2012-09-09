@@ -72,6 +72,12 @@ static int wacom_read_image(const char *filename, unsigned char image[1024])
 	 */
 /*FIX ME Add check*/
 
+	if (width != 64 || height !=32) {
+		ret = 1;
+                printf("Invalid image size: %dx%d, but expecting 64x32\n", width, height);
+		goto out;
+	}
+
 //        number_of_passes = png_set_interlace_handling(png_ptr);
         png_read_update_info(png_ptr, info_ptr);
 
