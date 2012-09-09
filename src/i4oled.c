@@ -101,7 +101,8 @@ static int wacom_read_image(const char *filename, unsigned char image[1024])
         }
 
 out:
-        fclose(fd);
+	if (fd)
+		fclose(fd);
 	return ret;
 }
 
@@ -176,7 +177,7 @@ static void usage(void)
 
 int main (int argc, char **argv)
 {
-	int c;
+	int c, ret;
 	int optidx;
 	int scramble_image;
 	char* filename;
@@ -231,10 +232,14 @@ int main (int argc, char **argv)
 	filename = argv[optind];
 	image_filename = argv[optind + 1];
 
-	wacom_read_image(image_filename, image);
+	ret = wacom_read_image(image_filename, image);
+	if (ret) 
+		goto out;
 
 	if (scramble_image) 
 		scramble(image);
 
-	return wacom_oled_write(filename, image);
+	ret = wacom_oled_write(filename, image);
+out:
+	return ret;
 }
