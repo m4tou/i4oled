@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <png.h>
+#include <pango/pangocairo.h>
 #include <stdio.h>
 
 #define VER "0.1"
