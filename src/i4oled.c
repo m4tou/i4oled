@@ -30,7 +30,7 @@
 #include <pango/pangocairo.h>
 #include <stdio.h>
 
-#define VER "0.1"
+#define VER "0.2"
 
 static int wacom_read_image(const char *filename, unsigned char image[1024])
 {
@@ -214,12 +214,14 @@ int main (int argc, char **argv)
 	int c, ret;
 	int optidx;
 	int scramble_image;
-	char* filename;
+	char* device_filename;
 	char* image_filename;
 	unsigned char image[1024];
 
 	struct option options[] = {
 		{"help", 0, NULL, 0},
+		{"device", 0, NULL, 0},
+		{"image", 0, NULL, 0},
 		{"scramble", 0, NULL, 0},
 		{"version", 0, NULL, 0},
 		{NULL, 0, NULL, 0}
@@ -243,12 +245,24 @@ int main (int argc, char **argv)
 						usage();
 						return 0;
 					case 1:
-						scramble_image = 1;
+						device_filename = argv[optind];
 						break;
 					case 2:
+						image_filename = argv[optind];
+						break;
+					case 3:
+						scramble_image = 1;
+						break;
+					case 4:
 						version();
 						return 0;
 				}
+				break;
+			case 'd':
+				device_filename = argv[optind-1];
+				break;
+			case 'i':
+				image_filename = argv[optind-1];
 				break;
 			case 'V':
 				version();
@@ -263,16 +277,17 @@ int main (int argc, char **argv)
 		}
 	}
 
-	filename = argv[optind];
-	image_filename = argv[optind + 1];
+	if (image_filename)
+		if (wacom_read_image(image_filename, image))
+			goto out;
 
-	ret = wacom_read_image(image_filename, image);
-	if (ret) 
-		goto out;
-
-	if (scramble_image) 
+	if (scramble_image)
 		scramble(image);
-	ret = wacom_oled_write(filename, image);
+
+	if (device_filename)
+		ret = wacom_oled_write(device_filename, image);
+
 out:
 	return ret;
 }
+
