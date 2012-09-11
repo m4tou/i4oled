@@ -26,11 +26,67 @@
 
 #include <fcntl.h>
 #include <getopt.h>
+#include <math.h>
 #include <png.h>
 #include <pango/pangocairo.h>
+#include <pango/pango.h>
 #include <stdio.h>
 
 #define VER "0.2"
+
+int rendertext(char* text, char* output_filename) {
+	cairo_t *cr;
+	cairo_status_t status;
+	cairo_surface_t *surface;
+	PangoFontDescription *desc;
+	PangoLayout *layout;
+	int width, height;
+	double x, y;
+
+	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 64, 32);
+	cr = cairo_create(surface);
+	cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.99);
+	cairo_paint(cr);
+
+	layout = pango_cairo_create_layout(cr);
+	pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
+	pango_layout_set_justify(layout, PANGO_ALIGN_CENTER);
+	pango_layout_set_text(layout, text, -1);
+	desc = pango_font_description_new();
+
+	pango_font_description_set_family(desc, "Terminal");
+	pango_font_description_set_absolute_size(desc, PANGO_SCALE * 11);
+	pango_layout_set_font_description(layout, desc);
+	pango_font_description_free(desc);
+
+	pango_layout_get_size(layout, &width, &height);
+	width = width/PANGO_SCALE;
+	cairo_new_path(cr);
+
+	x = trunc((64.0 - width)/2);
+	y = 10;
+
+	cairo_move_to(cr, x, y);
+	cairo_set_line_width(cr, 1.0);
+	cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+	pango_cairo_update_layout(cr, layout);
+
+	pango_cairo_layout_path(cr, layout);
+	cairo_fill(cr);
+
+	g_object_unref(layout);
+	cairo_destroy(cr);
+
+	if (output_filename) {
+		status = cairo_surface_write_to_png(surface, output_filename);
+		if (status != CAIRO_STATUS_SUCCESS) {
+			printf("Could not save to png, \"%s \"\n", output_filename);
+			return 1;
+		}
+	}
+	cairo_surface_destroy(surface);
+	return 0;
+}
 
 static int wacom_read_image(const char *filename, unsigned char image[1024])
 {
@@ -197,16 +253,25 @@ static void version(void)
 static void usage(void)
 {
 	printf(
-	"i4oled sets OLED icon on Intuos4 tablets\n"
+	"\n"
+	"i4oled sets OLED icon on Intuos4 tablets. Also converts text to png image ready for use as Intuos4 OLED icon.\n"
 	"Usage: i4oled [options] [device image]\n"
 	"Options:\n"
 	" -h, --help                 - usage\n"
+	" -d, --device               - path to OLED sysfs entry\n"
+	" -o, --output         	     - output png file\n"
 	" -s, --scramble             - scramble image before sending. Useful for kernel without the 'scramble' patch\n"
+	" -t, --text         	     - text string for convertsion into image\n"
 	" -V, --version              - version info\n");
 
 	printf(
-	"\ndevice - path to OLED sysfs entry (button[No]_rawimg) i.e /sys/bus/usb/drivers/wacom/3-1.2:1.0/wacom_led/button0_rawimg\n"
-	"image  - PNG image file, has to be 64 x 32, 8-bit/color RGBA, non-interlaced \n");
+	"Usage:\n"
+	"i4oled --text \"Ctrl+Alt A\" --output ctrl_alt_A.png renders text to PNG image\n"
+	"i4oled --image ctrl_alt_A --device  /sys/bus/usb/drivers/wacom/3-1.2:1.0/wacom_led/button0_rawimg\n"
+	"Make sure OLED brightness is set, otherwise icons will be black\n"
+	"echo 200 > /sys/bus/usb/drivers/wacom/3-1.2:1.0/wacom_led/buttons_luminance\n"
+	"Expected image format is:\n"
+	"PNG image file, has to be 64 x 32, 8-bit/color RGBA, non-interlaced \n");
 }
 
 int main (int argc, char **argv)
@@ -214,15 +279,19 @@ int main (int argc, char **argv)
 	int c, ret;
 	int optidx;
 	int scramble_image;
-	char* device_filename;
-	char* image_filename;
+	char* device_filename = NULL;
+	char* image_filename = NULL;
+	char* output_filename = NULL;
+	char* text = NULL;
 	unsigned char image[1024];
 
 	struct option options[] = {
 		{"help", 0, NULL, 0},
 		{"device", 0, NULL, 0},
 		{"image", 0, NULL, 0},
+		{"output", 0, NULL, 0},
 		{"scramble", 0, NULL, 0},
+		{"text", 0, NULL, 0},
 		{"version", 0, NULL, 0},
 		{NULL, 0, NULL, 0}
 	};
@@ -235,7 +304,7 @@ int main (int argc, char **argv)
 		return 1;
 	}
 
-	while ((c = getopt_long(argc, argv, "+hsV", options, &optidx)) != -1) {
+	while ((c = getopt_long(argc, argv, "hd:i:o:st:V", options, &optidx)) != -1) {
 		switch(c)
 		{
 			case 0:
@@ -251,9 +320,15 @@ int main (int argc, char **argv)
 						image_filename = argv[optind];
 						break;
 					case 3:
-						scramble_image = 1;
+						output_filename = argv[optind];
 						break;
 					case 4:
+						scramble_image = 1;
+						break;
+					case 5:
+						text = argv[optind];
+						break;
+					case 6:
 						version();
 						return 0;
 				}
@@ -264,12 +339,18 @@ int main (int argc, char **argv)
 			case 'i':
 				image_filename = argv[optind-1];
 				break;
-			case 'V':
-				version();
-				return 0;
+			case 'o':
+				output_filename = argv[optind-1];
+				break;
 			case 's':
 				scramble_image = 1;
 				break;
+			case 't':
+				text = argv[optind-1];
+				break;
+			case 'V':
+				version();
+				return 0;
 			case 'h':
 			default:
 				usage();
@@ -284,8 +365,13 @@ int main (int argc, char **argv)
 	if (scramble_image)
 		scramble(image);
 
-	if (device_filename)
+	if (text)
+		if (rendertext(text, output_filename))
+			goto out;
+
+	if (device_filename){
 		ret = wacom_oled_write(device_filename, image);
+}
 
 out:
 	return ret;

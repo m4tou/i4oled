@@ -20,6 +20,7 @@ AC_CHECK_HEADER(stdio.h, [], [a=0])
 
 # Checks for library functions.
 AC_CHECK_LIB([png], [png_read_image],,[])
+AC_CHECK_LIB([m], [trunc],,[])
 
 AC_CONFIG_FILES([
 	Makefile
