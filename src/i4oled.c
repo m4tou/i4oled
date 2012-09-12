@@ -31,6 +31,7 @@
 #include <pango/pangocairo.h>
 #include <pango/pango.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #define VER "0.2"
 
@@ -90,10 +91,8 @@ int rendertext(char* text, char* output_filename) {
 
 static int wacom_read_image(const char *filename, unsigned char image[1024])
 {
-	char header[8];
+	unsigned char header[8];
 	unsigned char lo, hi;
-	int retval;
-	int length = 1024;
 	int x, y;
 	int ret = 0;
 	int width, height;
@@ -101,7 +100,6 @@ static int wacom_read_image(const char *filename, unsigned char image[1024])
 	png_byte bit_depth;
 	png_structp png_ptr;
 	png_infop info_ptr;
-	int number_of_passes;
 	png_bytep * row_pointers;
 
 	FILE *fd = fopen(filename, "r");
@@ -202,7 +200,7 @@ static int wacom_oled_write(const char *filename, unsigned char image[1024])
 	int retval;
 	int length = 1024;
 	int fd = -1;
-	int x, ret;
+	int ret;
 
 	fd = open (filename , O_WRONLY);
 	if (fd < 0) {
