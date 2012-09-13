@@ -27,15 +27,72 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <math.h>
+#include <locale.h>
 #include <png.h>
 #include <pango/pangocairo.h>
 #include <pango/pango.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <wchar.h>
 
 #define VER "0.2"
+#define SIZE 40
+#define MAX_LEN 11
 
-int rendertext(char* text, char* output_filename) {
+void split_text(wchar_t *source, char* line1, char* line2) 
+{
+	wchar_t buf[SIZE];
+	wchar_t delimiters[SIZE] = L" -+_";
+	wchar_t wcsline1[SIZE] = L"";
+	wchar_t wcsline2[SIZE] = L"";
+	wchar_t* token;
+	wchar_t* state;
+	int i;
+	int token_len[SIZE >> 1]; /*Maximum number of tokens equals half of maximum number of characters*/
+	size_t length, l;
+
+	wcscpy(buf, source);
+	token = wcstok(buf, delimiters, &state);
+
+	if (wcslen(token) > MAX_LEN) {
+		wcsncpy(wcsline1, source, MAX_LEN);
+		wcsncpy(wcsline2, source + MAX_LEN, SIZE - MAX_LEN);
+		goto out;
+	}
+
+	for (i = 0; i < 10; i++)
+		token_len[i] = 0;
+
+	i = 0;
+	while (token) {
+		token_len[i] = wcslen(token) + 1;
+		i++;
+		token = wcstok(NULL, delimiters, &state);
+	}
+
+	i = 0;
+	length = token_len[i];
+	while ((length + token_len[i + 1]) <= MAX_LEN) {  
+		i++;
+		length = length + token_len[i];
+	}	
+
+	wcsncpy(wcsline1, source, length - 1);
+	wcsncpy(wcsline2, source + length, SIZE - length);
+out:
+	l = wcstombs(line1, wcsline1, MAX_LEN);
+	if (l == -1) { 
+		printf("Invalid character sequance - please try a different text");
+	}	
+
+	l = wcstombs(line2, wcsline2, SIZE - MAX_LEN);
+	if (l == -1) { 
+		printf("Invalid character sequance - please try a different text");
+	}	
+}
+
+int rendertext(wchar_t* text, char* output_filename) {
 	cairo_t *cr;
 	cairo_status_t status;
 	cairo_surface_t *surface;
@@ -43,6 +100,14 @@ int rendertext(char* text, char* output_filename) {
 	PangoLayout *layout;
 	int width, height;
 	double x, y;
+	char line1[SIZE] = "";
+	char line2[SIZE] = "";
+	char buf[SIZE];
+
+	split_text(text ,line1, line2);
+	strcpy(buf, line1);
+	strcat(buf, "\n");
+	strcat(buf, line2);
 
 	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 64, 32);
 	cr = cairo_create(surface);
@@ -51,8 +116,7 @@ int rendertext(char* text, char* output_filename) {
 
 	layout = pango_cairo_create_layout(cr);
 	pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
-	pango_layout_set_justify(layout, PANGO_ALIGN_CENTER);
-	pango_layout_set_text(layout, text, -1);
+	pango_layout_set_text(layout, buf, -1);
 	desc = pango_font_description_new();
 
 	pango_font_description_set_family(desc, "Terminal");
@@ -65,7 +129,12 @@ int rendertext(char* text, char* output_filename) {
 	cairo_new_path(cr);
 
 	x = trunc((64.0 - width)/2);
-	y = 10;
+
+	if (!strcmp(line2, ""))
+		y = 10;
+	else  
+		y = 4;
+	
 
 	cairo_move_to(cr, x, y);
 	cairo_set_line_width(cr, 1.0);
@@ -272,16 +341,20 @@ static void usage(void)
 	"PNG image file, has to be 64 x 32, 8-bit/color RGBA, non-interlaced \n");
 }
 
+#define SIZE 40
+
 int main (int argc, char **argv)
 {
-	int c, ret;
+	int c, ret = 0;
 	int optidx;
 	int scramble_image;
 	char* device_filename = NULL;
 	char* image_filename = NULL;
 	char* output_filename = NULL;
-	char* text = NULL;
+	char* char_text = NULL;
+	wchar_t text[SIZE] = L"";
 	unsigned char image[1024];
+	size_t length;
 
 	struct option options[] = {
 		{"help", 0, NULL, 0},
@@ -293,6 +366,12 @@ int main (int argc, char **argv)
 		{"version", 0, NULL, 0},
 		{NULL, 0, NULL, 0}
 	};
+
+	if (!setlocale(LC_CTYPE, "")) {
+		fprintf(stderr, "Can't set the specified locale! "
+			"Check LANG, LC_CTYPE, LC_ALL.\n");
+		return 1;
+	}
 
 	scramble_image = 0;
 
@@ -324,7 +403,12 @@ int main (int argc, char **argv)
 						scramble_image = 1;
 						break;
 					case 5:
-						text = argv[optind];
+						char_text = argv[optind];
+						length = mbstowcs(text, char_text, strlen(char_text));
+						if (length == -1) { 
+							printf("Invalid character sequance - please try a different text");
+							return 1;
+						}
 						break;
 					case 6:
 						version();
@@ -344,7 +428,12 @@ int main (int argc, char **argv)
 				scramble_image = 1;
 				break;
 			case 't':
-				text = argv[optind-1];
+				char_text = argv[optind-1];
+				length = mbstowcs(text, char_text, strlen(char_text));
+				if (length == -1) { 
+					printf("Invalid character sequance - please try a different text");
+					return 1;
+				};
 				break;
 			case 'V':
 				version();
@@ -363,9 +452,10 @@ int main (int argc, char **argv)
 	if (scramble_image)
 		scramble(image);
 
-	if (text)
+	if (wcscmp(text, L"")) {
 		if (rendertext(text, output_filename))
 			goto out;
+	}
 
 	if (device_filename){
 		ret = wacom_oled_write(device_filename, image);
