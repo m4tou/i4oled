@@ -101,6 +101,25 @@ out:
 	}
 }
 
+void i4oled_text_to_image(struct params_s* params, cairo_surface_t *surface)
+{
+	unsigned char* csurf;
+	int i, x, y;
+	unsigned char lo, hi;
+
+	cairo_surface_flush(surface);
+	csurf = cairo_image_surface_get_data(surface);
+	i = 0;
+        for (y = 0; y < 32; y++) {
+                for (x = 0; x < (64 >> 1); x++) {
+			hi = 0xf0 & csurf[256 * y + 8 * x + 1];
+			lo = 0x0f & (csurf[256 * y + 8 * x + 5] >> 4);
+			params->image[i] = hi | lo;
+			i++;
+                }
+        }
+}
+
 int i4oled_render_text(struct params_s* params) 
 {
 	cairo_t *cr;
@@ -109,7 +128,8 @@ int i4oled_render_text(struct params_s* params)
 	PangoFontDescription *desc;
 	PangoLayout *layout;
 	int width, height;
-	double x, y;
+	double dx, dy;
+	int x, y;
 	char line1[SIZE+1] = "";
 	char line2[SIZE+1] = "";
 	char buf[SIZE+1];
@@ -138,20 +158,23 @@ int i4oled_render_text(struct params_s* params)
 	width = width/PANGO_SCALE;
 	cairo_new_path(cr);
 
-	x = trunc((64.0 - width)/2);
+	dx = trunc((64.0 - width)/2);
 
 	if (!strcmp(line2, ""))
-		y = 10;
+		dy = 10;
 	else
-		y = 4;
+		dy = 4;
 
-	cairo_move_to(cr, x, y);
+	cairo_move_to(cr, dx, dy);
 	cairo_set_line_width(cr, 1.0);
 	cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
 	pango_cairo_update_layout(cr, layout);
 
 	pango_cairo_layout_path(cr, layout);
 	cairo_fill(cr);
+
+	if (params->device_filename)
+		i4oled_text_to_image(params, surface);
 
 	g_object_unref(layout);
 	cairo_destroy(cr);
@@ -278,7 +301,7 @@ static int i4oled_oled_write(struct params_s* params)
 	int retval;
 	int length = 1024;
 	int fd = -1;
-	int ret;
+	int ret = 0;
 
 	fd = open (params->device_filename , O_WRONLY);
 	if (fd < 0) {
@@ -305,6 +328,7 @@ static void i4oled_scramble(struct params_s* params)
         int x, y, i;
 	unsigned char l1,l2,h1,h2;
 
+		wprintf(L"SCRAMBLING\n");
         for (i = 0; i < 1024; i++)
                 buf[i] = params->image[i];
 
@@ -470,17 +494,19 @@ int main (int argc, char **argv)
 		if (i4oled_read_image(&params))
 			goto out;
 
+	if (wcscmp(params.text, L"")) {
+		if (i4oled_render_text(&params)) {
+			ret = 1;
+			goto out;
+		}
+	}
+
 	if (params.scramble_image)
 		i4oled_scramble(&params);
 
-	if (wcscmp(params.text, L"")) {
-		if (i4oled_render_text(&params));
-			goto out;
-	}
-
 	if (params.device_filename){
 		ret = i4oled_oled_write(&params);
-}
+	}
 
 out:
 	free(params.image);
