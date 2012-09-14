@@ -341,8 +341,6 @@ static void usage(void)
 	"PNG image file, has to be 64 x 32, 8-bit/color RGBA, non-interlaced \n");
 }
 
-#define SIZE 40
-
 int main (int argc, char **argv)
 {
 	int c, ret = 0;
