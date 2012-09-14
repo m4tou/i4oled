@@ -44,7 +44,7 @@ struct params_s {
 	char* device_filename;
 	char* image_filename;
 	char* output_filename;
-	unsigned char image[1024];
+	unsigned char* image;
 	int scramble_image;
 	wchar_t text[SIZE+1];
 };
@@ -101,7 +101,7 @@ out:
 	}
 }
 
-int i4oled_render_text(struct params_s* params)
+int i4oled_render_text(struct params_s* params) 
 {
 	cairo_t *cr;
 	cairo_status_t status;
@@ -163,6 +163,7 @@ int i4oled_render_text(struct params_s* params)
 			return 1;
 		}
 	}
+
 	cairo_surface_destroy(surface);
 	return 0;
 }
@@ -393,12 +394,14 @@ int main (int argc, char **argv)
 	params.device_filename= NULL;
 	params.image_filename = NULL;
 	params.output_filename = NULL;
+	params.image = malloc(1024);
 	params.text[0] = (wchar_t)0x0;
 	params.scramble_image = 0;
 
 	if (argc < 2) {
 		i4oled_usage();
-		return 1;
+		ret = 1;
+		goto out;
 	}
 
 	while ((c = getopt_long(argc, argv, "hd:i:o:st:V", options, &optidx)) != -1) {
@@ -407,7 +410,8 @@ int main (int argc, char **argv)
 			switch(optidx){
 			case 0:
 				i4oled_usage();
-				return 0;
+				ret = 0;
+				goto out;
 			case 1:
 				params.device_filename = argv[optind];
 				break;
@@ -421,12 +425,15 @@ int main (int argc, char **argv)
 				params.scramble_image = 1;
 				break;
 			case 5:
-				if (i4oled_acquire_text(&params, argv[optind]))
-					return 1;
+				if (i4oled_acquire_text(&params, argv[optind])) {
+					ret = 1;
+					goto out;
+				}
 				break;
 			case 6:
 				i4oled_version();
-				return 0;
+				ret = 0;
+				goto out;
 		}
 		break;
 		case 'd':
@@ -442,16 +449,20 @@ int main (int argc, char **argv)
 			params.scramble_image = 1;
 			break;
 		case 't':
-			if (i4oled_acquire_text(&params, argv[optind-1]))
-				return 1;
+			if (i4oled_acquire_text(&params, argv[optind-1])) {
+				ret = 1;
+				goto out;	
+			}
 			break;
 		case 'V':
 			i4oled_version();
-			return 0;
+			ret = 0;
+			goto out;
 		case 'h':
 		default:
 			i4oled_usage();
-			return 0;
+			ret = 0;
+			goto out;
 		}
 	}
 
@@ -472,6 +483,7 @@ int main (int argc, char **argv)
 }
 
 out:
+	free(params.image);
 	return ret;
 }
 
