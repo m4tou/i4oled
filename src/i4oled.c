@@ -273,24 +273,24 @@ out:
 	return ret;
 }
 
-static int wacom_oled_write(const char *filename, unsigned char image[1024])
+static int wacom_oled_write(struct params_s* params)
 {
 	int retval;
 	int length = 1024;
 	int fd = -1;
 	int ret;
 
-	fd = open (filename , O_WRONLY);
+	fd = open (params->device_filename , O_WRONLY);
 	if (fd < 0) {
 		ret = 1;
-		printf("Failed to open filename: %s\n", filename);
+		printf("Failed to open filename: %s\n", params->device_filename);
 		goto out;
 	}
 
-	retval = write (fd, image, length);
+	retval = write (fd, params->image, length);
 	if (retval != length) {
 		ret = 1;
-		printf("Writing to %s failed\n", filename);
+		printf("Writing to %s failed\n", params->device_filename);
 		goto out;
 	}
 out:
@@ -474,7 +474,7 @@ int main (int argc, char **argv)
 	}
 
 	if (params.device_filename){
-		ret = wacom_oled_write(params.device_filename, params.image);
+		ret = wacom_oled_write(&params);
 }
 
 out:
