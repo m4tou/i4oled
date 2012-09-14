@@ -345,13 +345,16 @@ int main (int argc, char **argv)
 {
 	int c, ret = 0;
 	int optidx;
-	int scramble_image;
-	char* device_filename = NULL;
-	char* image_filename = NULL;
-	char* output_filename = NULL;
+	struct params_s {
+		char* device_filename;
+		char* image_filename;
+		char* output_filename;
+		unsigned char image[1024];
+		int scramble_image;
+		wchar_t text[SIZE];
+	} params;
+
 	char* char_text = NULL;
-	wchar_t text[SIZE] = L"";
-	unsigned char image[1024];
 	size_t length;
 
 	struct option options[] = {
@@ -370,9 +373,13 @@ int main (int argc, char **argv)
 			"Check LANG, LC_CTYPE, LC_ALL.\n");
 		return 1;
 	}
-
-	scramble_image = 0;
-
+/*
+	params.device_filename= NULL;
+	params.image_filename = NULL;
+	params.output_filename = NULL;
+	params.text[SIZE] = L"";
+	params.scramble_image = 0;
+*/
 	if (argc < 2) {
 		usage();
 		return 1;
@@ -386,20 +393,20 @@ int main (int argc, char **argv)
 				usage();
 				return 0;
 			case 1:
-				device_filename = argv[optind];
+				params.device_filename = argv[optind];
 				break;
 			case 2:
-				image_filename = argv[optind];
+				params.image_filename = argv[optind];
 				break;
 			case 3:
-				output_filename = argv[optind];
+				params.output_filename = argv[optind];
 				break;
 			case 4:
-				scramble_image = 1;
+				params.scramble_image = 1;
 				break;
 			case 5:
 				char_text = argv[optind];
-				length = mbstowcs(text, char_text, strlen(char_text));
+				length = mbstowcs(params.text, char_text, strlen(char_text));
 				if (length == -1) { 
 					printf("Invalid character sequance - please try a different text");
 					return 1;
@@ -411,20 +418,20 @@ int main (int argc, char **argv)
 		}
 		break;
 		case 'd':
-			device_filename = argv[optind-1];
+			params.device_filename = argv[optind-1];
 			break;
 		case 'i':
-			image_filename = argv[optind-1];
+			params.image_filename = argv[optind-1];
 			break;
 		case 'o':
-			output_filename = argv[optind-1];
+			params.output_filename = argv[optind-1];
 			break;
 		case 's':
-			scramble_image = 1;
+			params.scramble_image = 1;
 			break;
 		case 't':
 			char_text = argv[optind-1];
-			length = mbstowcs(text, char_text, strlen(char_text));
+			length = mbstowcs(params.text, char_text, strlen(char_text));
 			if (length == -1) { 
 				printf("Invalid character sequance - please try a different text");
 				return 1;
@@ -440,20 +447,20 @@ int main (int argc, char **argv)
 		}
 	}
 
-	if (image_filename)
-		if (wacom_read_image(image_filename, image))
+	if (params.image_filename)
+		if (wacom_read_image(params.image_filename, params.image))
 			goto out;
 
-	if (scramble_image)
-		scramble(image);
+	if (params.scramble_image)
+		scramble(params.image);
 
-	if (wcscmp(text, L"")) {
-		if (rendertext(text, output_filename))
+	if (wcscmp(params.text, L"")) {
+		if (rendertext(params.text, params.output_filename))
 			goto out;
 	}
 
-	if (device_filename){
-		ret = wacom_oled_write(device_filename, image);
+	if (params.device_filename){
+		ret = wacom_oled_write(params.device_filename, params.image);
 }
 
 out:
