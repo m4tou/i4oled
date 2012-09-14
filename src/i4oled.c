@@ -373,13 +373,13 @@ int main (int argc, char **argv)
 			"Check LANG, LC_CTYPE, LC_ALL.\n");
 		return 1;
 	}
-/*
+
 	params.device_filename= NULL;
 	params.image_filename = NULL;
 	params.output_filename = NULL;
-	params.text[SIZE] = L"";
+	params.text[0] = (wchar_t)0x0;
 	params.scramble_image = 0;
-*/
+
 	if (argc < 2) {
 		usage();
 		return 1;
