@@ -299,14 +299,14 @@ out:
 	return ret;
 }
 
-static void scramble(unsigned char image[1024])
+static void scramble(struct params_s* params)
 {
         unsigned char buf[1024];
         int x, y, i;
 	unsigned char l1,l2,h1,h2;
 
         for (i = 0; i < 1024; i++)
-                buf[i] = image[i];
+                buf[i] = params->image[i];
 
         for (y = 0; y < 16; y++) {
                 for (x = 0; x < 32; x++) {
@@ -315,8 +315,8 @@ static void scramble(unsigned char image[1024])
 			h1 = (0xF0 & (buf[63 - x + 64 * y] << 4));
 			h2 = (0xF0 & (buf[63 - x + 64 * y]));
 
-                        image[(2 * x) + (64 * y)] = h1 | l1;
-                        image[(2 * x) + 1 + (64 * y)] = h2 | l2;
+                        params->image[(2 * x) + (64 * y)] = h1 | l1;
+                        params->image[(2 * x) + 1 + (64 * y)] = h2 | l2;
                 }
         }
 }
@@ -466,7 +466,7 @@ int main (int argc, char **argv)
 			goto out;
 
 	if (params.scramble_image)
-		scramble(params.image);
+		scramble(&params);
 
 	if (wcscmp(params.text, L"")) {
 		if (rendertext(&params));
