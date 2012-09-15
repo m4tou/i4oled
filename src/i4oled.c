@@ -37,7 +37,7 @@
 #include <wchar.h>
 
 #define VER "0.3"
-#define SIZE 40
+#define SIZE 30
 #define MAX_LEN 11
 
 struct params_s {
@@ -46,15 +46,15 @@ struct params_s {
 	char* output_filename;
 	unsigned char image[1024];
 	int scramble_image;
-	wchar_t text[SIZE];
+	wchar_t text[SIZE+1];
 };
 
 void split_text(wchar_t *source, char* line1, char* line2) 
 {
-	wchar_t buf[SIZE];
-	wchar_t delimiters[SIZE] = L" -+_";
-	wchar_t wcsline1[SIZE] = L"";
-	wchar_t wcsline2[SIZE] = L"";
+	wchar_t buf[SIZE+1];
+	wchar_t delimiters[SIZE+1] = L" -+_";
+	wchar_t wcsline1[SIZE+1] = L"";
+	wchar_t wcsline2[SIZE+1] = L"";
 	wchar_t* token;
 	wchar_t* state;
 	int i;
@@ -92,12 +92,12 @@ void split_text(wchar_t *source, char* line1, char* line2)
 out:
 	l = wcstombs(line1, wcsline1, MAX_LEN);
 	if (l == -1) { 
-		printf("Invalid character sequance - please try a different text");
+		wprintf(L"Invalid character sequance - please try a different text\n");
 	}	
 
-	l = wcstombs(line2, wcsline2, SIZE - MAX_LEN);
+	l = wcstombs(line2, wcsline2, wcslen(wcsline2));
 	if (l == -1) { 
-		printf("Invalid character sequance - please try a different text");
+		wprintf(L"Invalid character sequance - please try a different text\n");
 	}	
 }
 
@@ -110,9 +110,9 @@ int rendertext(wchar_t* text, char* output_filename)
 	PangoLayout *layout;
 	int width, height;
 	double x, y;
-	char line1[SIZE] = "";
-	char line2[SIZE] = "";
-	char buf[SIZE];
+	char line1[SIZE+1] = "";
+	char line2[SIZE+1] = "";
+	char buf[SIZE+1];
 
 	split_text(text ,line1, line2);
 	strcpy(buf, line1);
@@ -350,6 +350,25 @@ static void usage(void)
 	"PNG image file, has to be 64 x 32, 8-bit/color RGBA, non-interlaced \n");
 }
 
+int acquire_text(struct params_s* params, char* char_text)
+{
+	int l, length;
+	l = strlen(char_text);
+
+	if (l > SIZE) { 
+		wprintf(L"Text too long: %d characters, but maximum accepted length is %d\n", l, SIZE);
+		return 1;
+	}
+
+	length = mbstowcs(params->text, char_text, l + 1);
+
+	if (length == -1) { 
+		wprintf(L"Invalid character sequance - please try a different text\n");
+		return 1;
+	}
+	return 0;
+}
+
 int main (int argc, char **argv)
 {
 	int c, ret = 0;
@@ -408,12 +427,8 @@ int main (int argc, char **argv)
 				params.scramble_image = 1;
 				break;
 			case 5:
-				char_text = argv[optind];
-				length = mbstowcs(params.text, char_text, strlen(char_text));
-				if (length == -1) { 
-					printf("Invalid character sequance - please try a different text");
+				if (acquire_text(&params, argv[optind]))
 					return 1;
-				}
 				break;
 			case 6:
 				version();
@@ -433,12 +448,8 @@ int main (int argc, char **argv)
 			params.scramble_image = 1;
 			break;
 		case 't':
-			char_text = argv[optind-1];
-			length = mbstowcs(params.text, char_text, strlen(char_text));
-			if (length == -1) { 
-				printf("Invalid character sequance - please try a different text");
+			if (acquire_text(&params, argv[optind-1]))
 				return 1;
-			};
 			break;
 		case 'V':
 			version();
