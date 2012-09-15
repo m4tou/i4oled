@@ -101,7 +101,7 @@ out:
 	}	
 }
 
-int rendertext(wchar_t* text, char* output_filename) 
+int rendertext(struct params_s* params) 
 {
 	cairo_t *cr;
 	cairo_status_t status;
@@ -114,7 +114,7 @@ int rendertext(wchar_t* text, char* output_filename)
 	char line2[SIZE+1] = "";
 	char buf[SIZE+1];
 
-	split_text(text ,line1, line2);
+	split_text(params->text ,line1, line2);
 	strcpy(buf, line1);
 	strcat(buf, "\n");
 	strcat(buf, line2);
@@ -157,10 +157,10 @@ int rendertext(wchar_t* text, char* output_filename)
 	g_object_unref(layout);
 	cairo_destroy(cr);
 
-	if (output_filename) {
-		status = cairo_surface_write_to_png(surface, output_filename);
+	if (params->output_filename) {
+		status = cairo_surface_write_to_png(surface, params->output_filename);
 		if (status != CAIRO_STATUS_SUCCESS) {
-			printf("Could not save to png, \"%s \"\n", output_filename);
+			printf("Could not save to png, \"%s \"\n", params->output_filename);
 			return 1;
 		}
 	}
@@ -469,7 +469,7 @@ int main (int argc, char **argv)
 		scramble(params.image);
 
 	if (wcscmp(params.text, L"")) {
-		if (rendertext(params.text, params.output_filename))
+		if (rendertext(&params));
 			goto out;
 	}
 
