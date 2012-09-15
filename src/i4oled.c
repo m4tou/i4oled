@@ -49,7 +49,7 @@ struct params_s {
 	wchar_t text[SIZE+1];
 };
 
-void split_text(wchar_t *source, char* line1, char* line2) 
+void i4oled_split_text(wchar_t *source, char* line1, char* line2) 
 {
 	wchar_t buf[SIZE+1];
 	wchar_t delimiters[SIZE+1] = L" -+_";
@@ -101,7 +101,7 @@ out:
 	}	
 }
 
-int rendertext(struct params_s* params) 
+int i4oled_render_text(struct params_s* params) 
 {
 	cairo_t *cr;
 	cairo_status_t status;
@@ -114,7 +114,7 @@ int rendertext(struct params_s* params)
 	char line2[SIZE+1] = "";
 	char buf[SIZE+1];
 
-	split_text(params->text ,line1, line2);
+	i4oled_split_text(params->text ,line1, line2);
 	strcpy(buf, line1);
 	strcat(buf, "\n");
 	strcat(buf, line2);
@@ -168,7 +168,7 @@ int rendertext(struct params_s* params)
 	return 0;
 }
 
-static int wacom_read_image(struct params_s* params)
+static int i4oled_read_image(struct params_s* params)
 {
 	unsigned char header[8];
 	unsigned char lo, hi;
@@ -273,7 +273,7 @@ out:
 	return ret;
 }
 
-static int wacom_oled_write(struct params_s* params)
+static int i4oled_oled_write(struct params_s* params)
 {
 	int retval;
 	int length = 1024;
@@ -299,7 +299,7 @@ out:
 	return ret;
 }
 
-static void scramble(struct params_s* params)
+static void i4oled_scramble(struct params_s* params)
 {
         unsigned char buf[1024];
         int x, y, i;
@@ -321,12 +321,12 @@ static void scramble(struct params_s* params)
         }
 }
 
-static void version(void)
+static void i4oled_version(void)
 {
 	printf("%s\n", VER);
 }
 
-static void usage(void)
+static void i4oled_usage(void)
 {
 	printf(
 	"\n"
@@ -350,7 +350,7 @@ static void usage(void)
 	"PNG image file, has to be 64 x 32, 8-bit/color RGBA, non-interlaced \n");
 }
 
-int acquire_text(struct params_s* params, char* char_text)
+int i4oled_acquire_text(struct params_s* params, char* char_text)
 {
 	int l, length;
 	l = strlen(char_text);
@@ -398,7 +398,7 @@ int main (int argc, char **argv)
 	params.scramble_image = 0;
 
 	if (argc < 2) {
-		usage();
+		i4oled_usage();
 		return 1;
 	}
 
@@ -407,7 +407,7 @@ int main (int argc, char **argv)
 		case 0:
 			switch(optidx){
 			case 0:
-				usage();
+				i4oled_usage();
 				return 0;
 			case 1:
 				params.device_filename = argv[optind];
@@ -422,11 +422,11 @@ int main (int argc, char **argv)
 				params.scramble_image = 1;
 				break;
 			case 5:
-				if (acquire_text(&params, argv[optind]))
+				if (i4oled_acquire_text(&params, argv[optind]))
 					return 1;
 				break;
 			case 6:
-				version();
+				i4oled_version();
 				return 0;
 		}
 		break;
@@ -443,33 +443,33 @@ int main (int argc, char **argv)
 			params.scramble_image = 1;
 			break;
 		case 't':
-			if (acquire_text(&params, argv[optind-1]))
+			if (i4oled_acquire_text(&params, argv[optind-1]))
 				return 1;
 			break;
 		case 'V':
-			version();
+			i4oled_version();
 			return 0;
 		case 'h':
 		default:
-			usage();
+			i4oled_usage();
 			return 0;
 		}
 	}
 
 	if (params.image_filename)
-		if (wacom_read_image(&params))
+		if (i4oled_read_image(&params))
 			goto out;
 
 	if (params.scramble_image)
-		scramble(&params);
+		i4oled_scramble(&params);
 
 	if (wcscmp(params.text, L"")) {
-		if (rendertext(&params));
+		if (i4oled_render_text(&params));
 			goto out;
 	}
 
 	if (params.device_filename){
-		ret = wacom_oled_write(&params);
+		ret = i4oled_oled_write(&params);
 }
 
 out:
