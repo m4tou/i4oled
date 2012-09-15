@@ -172,7 +172,7 @@ static int wacom_read_image(const char *filename, unsigned char image[1024])
 {
 	unsigned char header[8];
 	unsigned char lo, hi;
-	int x, y;
+	int x, y, i;
 	int ret = 0;
 	int width, height;
 	png_byte color_type;
@@ -256,14 +256,14 @@ static int wacom_read_image(const char *filename, unsigned char image[1024])
 	png_set_strip_16(png_ptr);
 	png_set_packing(png_ptr);
 
+	i = 0;
         for (y = 0; y < height; y++) {
                 png_byte* row = row_pointers[y];
-                for (x = 0; x < width ; x++) {
+                for (x = 0; x < (width >> 1) ; x++) {
                         png_byte* ptr = &(row[x * 8]);
-			hi = ptr[0];
-			hi = 0xf0 & hi;
-			lo = ptr[4] >> 4;
-			image[(32 * y) + x] = hi | lo;
+			hi = 0xf0 & ptr[0];
+			lo = 0x0f & (ptr[4] >> 4);
+			image[i++] = hi | lo;
                 }
         }
 
