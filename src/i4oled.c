@@ -168,7 +168,7 @@ int rendertext(struct params_s* params)
 	return 0;
 }
 
-static int wacom_read_image(const char *filename, unsigned char image[1024])
+static int wacom_read_image(struct params_s* params)
 {
 	unsigned char header[8];
 	unsigned char lo, hi;
@@ -181,17 +181,17 @@ static int wacom_read_image(const char *filename, unsigned char image[1024])
 	png_infop info_ptr;
 	png_bytep * row_pointers;
 
-	FILE *fd = fopen(filename, "r");
+	FILE *fd = fopen(params->image_filename, "r");
 	if (!fd) {
 		ret = 1;
-		printf("Failed to open filename: %s\n", filename);
+		printf("Failed to open params->filename: %s\n", params->image_filename);
 		goto out;
 	}
 
         fread(header, 1, 8, fd);
         if (png_sig_cmp(header, 0, 8)) {
 		ret = 1;
-                printf("File %s is not a PNG file", filename);
+                printf("File %s is not a PNG file", params->image_filename);
 		goto out;
 	}
 
@@ -228,7 +228,7 @@ static int wacom_read_image(const char *filename, unsigned char image[1024])
 
 	if (width != 64 || height !=32) {
 		ret = 1;
-                printf("Invalid image size: %dx%d, but expecting 64x32\n", width, height);
+                printf("Invalid params->image size: %dx%d, but expecting 64x32\n", width, height);
 		goto out;
 	}
 
@@ -236,7 +236,7 @@ static int wacom_read_image(const char *filename, unsigned char image[1024])
 		ret = 1;
                 printf("Invalid color type or bit depth, please use RGBA 8-bit png\n"
 			"Use 'file' command on the icon. Expected result:\n"
-			"PNG image data, 64 x 32, 8-bit/color RGBA, non-interlaced\n");
+			"PNG params->image data, 64 x 32, 8-bit/color RGBA, non-interlaced\n");
 		goto out;
 	}
 
@@ -244,7 +244,7 @@ static int wacom_read_image(const char *filename, unsigned char image[1024])
 
         if (setjmp(png_jmpbuf(png_ptr))) {
 		ret = 1;
-                printf("Error reading image");
+                printf("Error reading params->image");
 		goto out;
 	}
 
@@ -263,7 +263,7 @@ static int wacom_read_image(const char *filename, unsigned char image[1024])
                         png_byte* ptr = &(row[x * 8]);
 			hi = 0xf0 & ptr[0];
 			lo = 0x0f & (ptr[4] >> 4);
-			image[i++] = hi | lo;
+			params->image[i++] = hi | lo;
                 }
         }
 
@@ -373,12 +373,7 @@ int main (int argc, char **argv)
 {
 	int c, ret = 0;
 	int optidx;
-
 	struct params_s params;
-
-	char* char_text = NULL;
-	size_t length;
-
 	struct option options[] = {
 		{"help", 0, NULL, 0},
 		{"device", 0, NULL, 0},
@@ -462,7 +457,7 @@ int main (int argc, char **argv)
 	}
 
 	if (params.image_filename)
-		if (wacom_read_image(params.image_filename, params.image))
+		if (wacom_read_image(&params))
 			goto out;
 
 	if (params.scramble_image)
