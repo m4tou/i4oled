@@ -40,6 +40,15 @@
 #define SIZE 40
 #define MAX_LEN 11
 
+struct params_s {
+	char* device_filename;
+	char* image_filename;
+	char* output_filename;
+	unsigned char image[1024];
+	int scramble_image;
+	wchar_t text[SIZE];
+};
+
 void split_text(wchar_t *source, char* line1, char* line2) 
 {
 	wchar_t buf[SIZE];
@@ -345,14 +354,8 @@ int main (int argc, char **argv)
 {
 	int c, ret = 0;
 	int optidx;
-	struct params_s {
-		char* device_filename;
-		char* image_filename;
-		char* output_filename;
-		unsigned char image[1024];
-		int scramble_image;
-		wchar_t text[SIZE];
-	} params;
+
+	struct params_s params;
 
 	char* char_text = NULL;
 	size_t length;
