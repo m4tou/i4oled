@@ -95,7 +95,7 @@ out:
 		wprintf(L"Invalid character sequance - please try a different text\n");
 	}
 
-	l = wcstombs(line2, wcsline2, wcslen(wcsline2));
+	l = wcstombs(line2, wcsline2, wcslen(wcsline2) + 1);
 	if (l == -1) {
 		wprintf(L"Invalid character sequance - please try a different text\n");
 	}
