@@ -91,13 +91,14 @@ void i4oled_split_text(wchar_t *source, char* line1, char* line2)
 	wcsncpy(wcsline2, source + length, SIZE - length);
 out:
 	l = wcstombs(line1, wcsline1, MAX_LEN);
-	if (l == -1) {
+	if (l == -1)
 		wprintf(L"Invalid character sequance - please try a different text\n");
-	}
 
-	l = wcstombs(line2, wcsline2, wcslen(wcsline2) + 1);
-	if (l == -1) {
-		wprintf(L"Invalid character sequance - please try a different text\n");
+	length = wcslen(wcsline2) + 1;
+	if (length) {
+		l = wcstombs(line2, wcsline2, length );
+		if (l == -1)
+			wprintf(L"Invalid character sequance - please try a different text\n");
 	}
 }
 
