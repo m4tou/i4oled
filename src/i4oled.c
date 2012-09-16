@@ -49,7 +49,7 @@ struct params_s {
 	wchar_t text[SIZE+1];
 };
 
-void i4oled_split_text(wchar_t *source, char* line1, char* line2) 
+void i4oled_split_text(wchar_t *source, char* line1, char* line2)
 {
 	wchar_t buf[SIZE+1];
 	wchar_t delimiters[SIZE+1] = L" -+_";
@@ -82,26 +82,26 @@ void i4oled_split_text(wchar_t *source, char* line1, char* line2)
 
 	i = 0;
 	length = token_len[i];
-	while ((length + token_len[i + 1]) <= MAX_LEN) {  
+	while ((length + token_len[i + 1]) <= MAX_LEN) {
 		i++;
 		length = length + token_len[i];
-	}	
+	}
 
 	wcsncpy(wcsline1, source, length - 1);
 	wcsncpy(wcsline2, source + length, SIZE - length);
 out:
 	l = wcstombs(line1, wcsline1, MAX_LEN);
-	if (l == -1) { 
+	if (l == -1) {
 		wprintf(L"Invalid character sequance - please try a different text\n");
-	}	
+	}
 
 	l = wcstombs(line2, wcsline2, wcslen(wcsline2));
-	if (l == -1) { 
+	if (l == -1) {
 		wprintf(L"Invalid character sequance - please try a different text\n");
-	}	
+	}
 }
 
-int i4oled_render_text(struct params_s* params) 
+int i4oled_render_text(struct params_s* params)
 {
 	cairo_t *cr;
 	cairo_status_t status;
@@ -142,9 +142,8 @@ int i4oled_render_text(struct params_s* params)
 
 	if (!strcmp(line2, ""))
 		y = 10;
-	else  
+	else
 		y = 4;
-	
 
 	cairo_move_to(cr, x, y);
 	cairo_set_line_width(cr, 1.0);
@@ -355,14 +354,14 @@ int i4oled_acquire_text(struct params_s* params, char* char_text)
 	int l, length;
 	l = strlen(char_text);
 
-	if (l > SIZE) { 
+	if (l > SIZE) {
 		wprintf(L"Text too long: %d characters, but maximum accepted length is %d\n", l, SIZE);
 		return 1;
 	}
 
 	length = mbstowcs(params->text, char_text, l + 1);
 
-	if (length == -1) { 
+	if (length == -1) {
 		wprintf(L"Invalid character sequance - please try a different text\n");
 		return 1;
 	}
