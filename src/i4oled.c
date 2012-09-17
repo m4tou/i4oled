@@ -183,7 +183,7 @@ int i4oled_render_text(struct params_s* params)
 	if (params->output_filename) {
 		status = cairo_surface_write_to_png(surface, params->output_filename);
 		if (status != CAIRO_STATUS_SUCCESS) {
-			printf("Could not save to png, \"%s \"\n", params->output_filename);
+			wprintf(L"Could not save to png, \"%s \"\n", params->output_filename);
 			return 1;
 		}
 	}
@@ -208,14 +208,14 @@ static int i4oled_read_image(struct params_s* params)
 	FILE *fd = fopen(params->image_filename, "r");
 	if (!fd) {
 		ret = 1;
-		printf("Failed to open params->filename: %s\n", params->image_filename);
+		wprintf(L"Failed to open params->filename: %s\n", params->image_filename);
 		goto out;
 	}
 
         fread(header, 1, 8, fd);
         if (png_sig_cmp(header, 0, 8)) {
 		ret = 1;
-                printf("File %s is not a PNG file", params->image_filename);
+                wprintf(L"File %s is not a PNG file", params->image_filename);
 		goto out;
 	}
 
@@ -223,20 +223,20 @@ static int i4oled_read_image(struct params_s* params)
 
         if (!png_ptr) {
 		ret = 1;
-                printf("png_create_read_struct failed");
+                wprintf(L"png_create_read_struct failed");
 		goto out;
 	}
 
         info_ptr = png_create_info_struct(png_ptr);
         if (!info_ptr) {
 		ret = 1;
-                printf("png_create_info_struct failed");
+                wprintf(L"png_create_info_struct failed");
 		goto out;
 	}
 
         if (setjmp(png_jmpbuf(png_ptr))) {
 		ret = 1;
-                printf("Error during init_io");
+                wprintf(L"Error during init_io");
 		goto out;
 	}
 
@@ -252,15 +252,15 @@ static int i4oled_read_image(struct params_s* params)
 
 	if (width != 64 || height !=32) {
 		ret = 1;
-                printf("Invalid params->image size: %dx%d, but expecting 64x32\n", width, height);
+                wprintf(L"Invalid image size: %dx%d, but expecting 64x32\n", width, height);
 		goto out;
 	}
 
 	if (color_type != 6 || bit_depth !=8) {
 		ret = 1;
-                printf("Invalid color type or bit depth, please use RGBA 8-bit png\n"
+                wprintf(L"Invalid color type or bit depth, please use RGBA 8-bit png\n"
 			"Use 'file' command on the icon. Expected result:\n"
-			"PNG params->image data, 64 x 32, 8-bit/color RGBA, non-interlaced\n");
+			"PNG image data, 64 x 32, 8-bit/color RGBA, non-interlaced\n");
 		goto out;
 	}
 
@@ -268,7 +268,7 @@ static int i4oled_read_image(struct params_s* params)
 
         if (setjmp(png_jmpbuf(png_ptr))) {
 		ret = 1;
-                printf("Error reading params->image");
+                wprintf(L"Error reading image");
 		goto out;
 	}
 
@@ -307,14 +307,14 @@ static int i4oled_oled_write(struct params_s* params)
 	fd = open (params->device_filename , O_WRONLY);
 	if (fd < 0) {
 		ret = 1;
-		printf("Failed to open filename: %s\n", params->device_filename);
+		wprintf(L"Failed to open filename: %s\n", params->device_filename);
 		goto out;
 	}
 
 	retval = write (fd, params->image, length);
 	if (retval != length) {
 		ret = 1;
-		printf("Writing to %s failed\n", params->device_filename);
+		wprintf(L"Writing to %s failed\n", params->device_filename);
 		goto out;
 	}
 out:
@@ -348,31 +348,31 @@ static void i4oled_scramble(struct params_s* params)
 
 static void i4oled_version(void)
 {
-	printf("%s\n", VER);
+	wprintf(L"%s\n", VER);
 }
 
 static void i4oled_usage(void)
 {
-	printf(
-	"\n"
-	"i4oled sets OLED icon on Intuos4 tablets. Also converts text to png image ready for use as Intuos4 OLED icon.\n"
-	"Usage: i4oled [options] [device image]\n"
-	"Options:\n"
-	" -h, --help                 - usage\n"
-	" -d, --device               - path to OLED sysfs entry\n"
-	" -o, --output         	     - output png file\n"
-	" -s, --scramble             - scramble image before sending. Useful for kernel without the 'scramble' patch\n"
-	" -t, --text         	     - text string for convertsion into image\n"
-	" -V, --version              - version info\n");
+	wprintf(
+	L"\n"
+	L"i4oled sets OLED icon on Intuos4 tablets. Also converts text to png image ready for use as Intuos4 OLED icon.\n"
+	L"Usage: i4oled [options] [device image]\n"
+	L"Options:\n"
+	L" -h, --help                 - usage\n"
+	L" -d, --device               - path to OLED sysfs entry\n"
+	L" -o, --output         	     - output png file\n"
+	L" -s, --scramble             - scramble image before sending. Useful for kernel without the 'scramble' patch\n"
+	L" -t, --text         	     - text string for convertsion into image\n"
+	L" -V, --version              - version info\n");
 
-	printf(
-	"Usage:\n"
-	"i4oled --text \"Ctrl+Alt A\" --output ctrl_alt_A.png renders text to PNG image\n"
-	"i4oled --image ctrl_alt_A --device  /sys/bus/usb/drivers/wacom/3-1.2:1.0/wacom_led/button0_rawimg\n"
-	"Make sure OLED brightness is set, otherwise icons will be black\n"
-	"echo 200 > /sys/bus/usb/drivers/wacom/3-1.2:1.0/wacom_led/buttons_luminance\n"
-	"Expected image format is:\n"
-	"PNG image file, has to be 64 x 32, 8-bit/color RGBA, non-interlaced \n");
+	wprintf(
+	L"Usage:\n"
+	L"i4oled --text \"Ctrl+Alt A\" --output ctrl_alt_A.png renders text to PNG image\n"
+	L"i4oled --image ctrl_alt_A --device  /sys/bus/usb/drivers/wacom/3-1.2:1.0/wacom_led/button0_rawimg\n"
+	L"Make sure OLED brightness is set, otherwise icons will be black\n"
+	L"echo 200 > /sys/bus/usb/drivers/wacom/3-1.2:1.0/wacom_led/buttons_luminance\n"
+	L"Expected image format is:\n"
+	L"PNG image file, has to be 64 x 32, 8-bit/color RGBA, non-interlaced \n");
 }
 
 int i4oled_acquire_text(struct params_s* params, char* char_text)
