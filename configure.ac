@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.61])
-AC_INIT(i4oled, 0.3, przemo@firszt.eu)
+AC_INIT(i4oled, 0.4, przemo@firszt.eu)
 AM_INIT_AUTOMAKE([-Wall -Werror])
 
 # Checks for programs.
