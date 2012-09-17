@@ -130,7 +130,6 @@ int i4oled_render_text(struct params_s* params)
 	PangoLayout *layout;
 	int width, height;
 	double dx, dy;
-	int x, y;
 	char line1[SIZE+1] = "";
 	char line2[SIZE+1] = "";
 	char buf[SIZE+1];
