@@ -1,7 +1,1 @@
-1. One character text doesn't render properly - 2nd line contains random character.
-   It also triggers "Invalid character sequance - please try a different text"
-	Test case: "--text = A"
-
-2. Text made of only number can cause wrong rendering
-	Test case: "--text = 000"
-
+None known, please report if you find any.

@@ -38,7 +38,7 @@
 
 #define VER "0.4"
 #define SIZE 30
-#define MAX_LEN 11
+#define MAX_LEN 9
 
 struct params_s {
 	char* device_filename;
@@ -51,7 +51,7 @@ struct params_s {
 
 void i4oled_split_text(wchar_t *source, char* line1, char* line2)
 {
-	wchar_t buf[SIZE+1];
+	wchar_t buf[SIZE+1] = L"";
 	wchar_t delimiters[SIZE+1] = L" -+_";
 	wchar_t wcsline1[SIZE+1] = L"";
 	wchar_t wcsline2[SIZE+1] = L"";
@@ -62,6 +62,11 @@ void i4oled_split_text(wchar_t *source, char* line1, char* line2)
 	size_t length, l;
 
 	wcscpy(buf, source);
+	if (wcslen(buf) < MAX_LEN) {
+		wcsncpy(wcsline1, source, MAX_LEN);
+		goto out;
+	}
+
 	token = wcstok(buf, delimiters, &state);
 
 	if (wcslen(token) > MAX_LEN) {
@@ -75,7 +80,7 @@ void i4oled_split_text(wchar_t *source, char* line1, char* line2)
 
 	i = 0;
 	while (token) {
-		token_len[i] = wcslen(token) + 1;
+		token_len[i] = wcslen(token);
 		i++;
 		token = wcstok(NULL, delimiters, &state);
 	}
@@ -87,7 +92,7 @@ void i4oled_split_text(wchar_t *source, char* line1, char* line2)
 		length = length + token_len[i];
 	}
 
-	wcsncpy(wcsline1, source, length - 1);
+	wcsncpy(wcsline1, source, length);
 	wcsncpy(wcsline2, source + length, SIZE - length);
 out:
 	l = wcstombs(line1, wcsline1, MAX_LEN);
@@ -95,7 +100,7 @@ out:
 		wprintf(L"Invalid character sequance - please try a different text\n");
 
 	length = wcslen(wcsline2) + 1;
-	if (length) {
+	if (length > 1) {
 		l = wcstombs(line2, wcsline2, length );
 		if (l == -1)
 			wprintf(L"Invalid character sequance - please try a different text\n");
@@ -328,7 +333,6 @@ static void i4oled_scramble(struct params_s* params)
         int x, y, i;
 	unsigned char l1,l2,h1,h2;
 
-		wprintf(L"SCRAMBLING\n");
         for (i = 0; i < 1024; i++)
                 buf[i] = params->image[i];
 
