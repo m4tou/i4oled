@@ -1,9 +1,9 @@
 i4oled is a simple helper for setting and rendering OLED icons on Intuos4
 family tablets. It uses cairo/pango library to render text and some 'logic'
 to split text nicely if it's too long to fit in one line. The main goal
-of the project it to develop solutins (splitting text, rendering, png handling,
+of the project it to develop solutions (splitting text, rendering, png handling,
 OLED preparing/writing) that can be used to implement wacom-panel in
-gnome-panel-settings, but it's also a fully independend command line tool.
+gnome-panel-settings, but it's also a fully independent command line tool.
 
 i4oled accepts text or PNG images as input. It can set the OLED icon directly
 on tablet or can save PNG image for later use. Expected PNG format is:
