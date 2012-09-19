@@ -75,7 +75,7 @@ void i4oled_split_text(wchar_t *source, char* line1, char* line2)
 		goto out;
 	}
 
-	for (i = 0; i < [SIZE >> 1]; i++)
+	for (i = 0; i < (SIZE >> 1); i++)
 		token_len[i] = 0;
 
 	i = 0;
