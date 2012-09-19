@@ -7,9 +7,9 @@ AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_PROG_CC
 
 # Checks for libraries.
-PKG_CHECK_MODULES([DEPS], [pangocairo > 1.30.0])
-PKG_CHECK_MODULES([DEPS], [pango > 1.30.0])
-PKG_CHECK_MODULES([DEPS], [cairo > 1.10.0])
+PKG_CHECK_MODULES([DEPS], [pangocairo >= 1.29.0])
+PKG_CHECK_MODULES([DEPS], [pango >= 1.29.0])
+PKG_CHECK_MODULES([DEPS], [cairo >= 1.10.0])
 
 # Checks for header files.
 AC_CHECK_HEADER(getopt.h, [], [a=0])
