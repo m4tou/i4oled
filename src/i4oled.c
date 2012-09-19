@@ -171,7 +171,6 @@ int i4oled_render_text(struct params_s* params)
 		dy = 4;
 
 	cairo_move_to(cr, dx, dy);
-	cairo_set_line_width(cr, 1.0);
 	cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
 	pango_cairo_update_layout(cr, layout);
 
