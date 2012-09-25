@@ -399,6 +399,9 @@ int i4oled_acquire_text(struct params_s* params, char* char_text)
 int main (int argc, char **argv)
 {
 	int c, ret = 0;
+	int input_present = 0;
+	int output_present = 0;
+	int device_present = 0;
 	int optidx;
 	struct params_s params;
 	struct option options[] = {
@@ -441,12 +444,15 @@ int main (int argc, char **argv)
 				goto out;
 			case 1:
 				params.device_filename = argv[optind];
+				device_present++;
 				break;
 			case 2:
 				params.image_filename = argv[optind];
+				input_present++;
 				break;
 			case 3:
 				params.output_filename = argv[optind];
+				output_present++;
 				break;
 			case 4:
 				params.scramble_image = 1;
@@ -456,6 +462,7 @@ int main (int argc, char **argv)
 					ret = 1;
 					goto out;
 				}
+				input_present++;
 				break;
 			case 6:
 				i4oled_version();
@@ -465,12 +472,15 @@ int main (int argc, char **argv)
 		break;
 		case 'd':
 			params.device_filename = argv[optind-1];
+			device_present++;
 			break;
 		case 'i':
 			params.image_filename = argv[optind-1];
+			input_present++;
 			break;
 		case 'o':
 			params.output_filename = argv[optind-1];
+			output_present++;
 			break;
 		case 's':
 			params.scramble_image = 1;
@@ -480,6 +490,7 @@ int main (int argc, char **argv)
 				ret = 1;
 				goto out;	
 			}
+			input_present++;
 			break;
 		case 'V':
 			i4oled_version();
@@ -491,6 +502,30 @@ int main (int argc, char **argv)
 			ret = 0;
 			goto out;
 		}
+	}
+
+	if (input_present != 1) {
+		wprintf(L"Please use --text OR --image, multiple input option are not allowed\n");
+		ret = 1;
+		goto out;
+	}
+
+	if ((!output_present) && (!device_present)) {
+		wprintf(L"Please meke sure that there is an output specified with --device or --output\n");
+		ret = 1;
+		goto out;
+	}
+
+	if (device_present > 1) {
+		wprintf(L"Multiple --device options are not allowed\n");
+		ret = 1;
+		goto out;
+	}
+
+	if (output_present > 1) {
+		wprintf(L"Multiple --output options are not allowed\n");
+		ret = 1;
+		goto out;
 	}
 
 	if (params.image_filename)
