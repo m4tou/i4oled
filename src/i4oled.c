@@ -36,7 +36,7 @@
 #include <unistd.h>
 #include <wchar.h>
 
-#define VER "1.0-rc2"
+#define VER "1.0-rc3"
 #define SIZE 30
 #define MAX_LEN 9
 
