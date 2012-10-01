@@ -24,7 +24,7 @@ i4oled -s --image icons/play.png --device /sys/bus/usb/drivers/wacom/[Dev #]/wac
 
 Render text to PNG file:
 
-i4oled -s --text "Shift-Meta-X" --output Shift-Meta-X.png 
+i4oled -s --text "Shift-Meta-X" --output Shift-Meta-X.png
 
 IMPORTANT NOTE No.1! Make sure OLED brightness is set for the tablet, otherwise icons will remain invisible!
 (black on black). It can be done i.e. in this way:
@@ -33,6 +33,6 @@ echo 200 > /sys/bus/usb/drivers/wacom/[Dev #]/wacom_led/buttons_luminance
 
 IMPORTANT NOTE No.2! 'Scramble' option has to be used with button#_rawimg. There will be no need to use it if
 this patch [1] gets accepted into kernel mainline.
-[1] http://permalink.gmane.org/gmane.linux.documentation/6587 
+[1] http://permalink.gmane.org/gmane.linux.documentation/6587
 
 Enjoy!
