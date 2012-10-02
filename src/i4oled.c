@@ -36,7 +36,7 @@
 
 #define VER "1.0-rc3"
 #define SIZE 30
-#define MAX_LEN 9
+#define MAX_LEN 10
 
 struct params_s {
 	char *device_filename;
@@ -85,13 +85,13 @@ void i4oled_split_text(wchar_t *source, char *line1, char *line2)
 
 	i = 0;
 	length = token_len[i];
-	while ((length + token_len[i + 1]) <= MAX_LEN) {
+	while ((length + token_len[i + 1] + 1) <= MAX_LEN) {
 		i++;
-		length = length + token_len[i];
+		length = length + token_len[i] + 1;
 	}
 
 	wcsncpy(wcsline1, source, length);
-	wcsncpy(wcsline2, source + length, SIZE - length);
+	wcsncpy(wcsline2, source + length + 1, SIZE - length);
 out:
 	l = wcstombs(line1, wcsline1, MAX_LEN);
 	if (l == -1)
