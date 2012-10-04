@@ -43,7 +43,6 @@ struct params_s {
 	char *image_filename;
 	char *output_filename;
 	unsigned char *image;
-	int scramble_image;
 	wchar_t text[SIZE+1];
 };
 
@@ -362,7 +361,6 @@ static void i4oled_usage(void)
 	L" -h, --help		- usage\n"
 	L" -d, --device		- path to OLED sysfs entry\n"
 	L" -o, --output		- output png file\n"
-	L" -s, --scramble	- scramble image before sending. Useful for kernel without the 'scramble' patch\n"
 	L" -t, --text		- text string for convertsion into image\n"
 	L" -V, --version	- version info\n");
 
@@ -408,7 +406,6 @@ int main(int argc, char **argv)
 		{"device", 0, NULL, 0},
 		{"image", 0, NULL, 0},
 		{"output", 0, NULL, 0},
-		{"scramble", 0, NULL, 0},
 		{"text", 0, NULL, 0},
 		{"version", 0, NULL, 0},
 		{NULL, 0, NULL, 0}
@@ -425,7 +422,6 @@ int main(int argc, char **argv)
 	params.output_filename = NULL;
 	params.image = malloc(1024);
 	params.text[0] = (wchar_t)0x0;
-	params.scramble_image = 0;
 
 	if (argc < 2) {
 		i4oled_usage();
@@ -433,7 +429,7 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	while ((c = getopt_long(argc, argv, "hd:i:o:st:V", options, &optidx)) != -1) {
+	while ((c = getopt_long(argc, argv, "hd:i:o:t:V", options, &optidx)) != -1) {
 		switch (c) {
 		case 0:
 			switch (optidx) {
@@ -454,9 +450,6 @@ int main(int argc, char **argv)
 				output_present++;
 				break;
 			case 4:
-				params.scramble_image = 1;
-				break;
-			case 5:
 				if (i4oled_acquire_text(&params, argv[optind])) {
 					ret = 1;
 					goto out;
@@ -480,9 +473,6 @@ int main(int argc, char **argv)
 		case 'o':
 			params.output_filename = argv[optind-1];
 			output_present++;
-			break;
-		case 's':
-			params.scramble_image = 1;
 			break;
 		case 't':
 			if (i4oled_acquire_text(&params, argv[optind-1])) {
@@ -538,11 +528,10 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (params.scramble_image)
+	if (params.device_filename) {
 		i4oled_scramble(&params);
-
-	if (params.device_filename)
 		ret = i4oled_oled_write(&params);
+	}
 
 out:
 	free(params.image);
