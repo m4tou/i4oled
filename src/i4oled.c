@@ -59,7 +59,7 @@ void i4oled_split_text(wchar_t *source, char *line1, char *line2)
 	size_t length, l;
 
 	wcscpy(buf, source);
-	if (wcslen(buf) < MAX_LEN) {
+	if (wcslen(buf) <= MAX_LEN) {
 		wcsncpy(wcsline1, source, MAX_LEN);
 		goto out;
 	}
