@@ -1,2 +1,4 @@
 Make i4oled work over bluetooth (currently only usb). It requires recognising type of device.
 "Bluetooth" icons are 1-bit, so some other internal changes will also be required.
+
+Add --inage toption to help
