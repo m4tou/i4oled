@@ -360,6 +360,7 @@ static void i4oled_usage(void)
 	L"Options:\n"
 	L" -h, --help		- usage\n"
 	L" -d, --device		- path to OLED sysfs entry\n"
+	L" -i, --image		- image to be rendered on OLED display\n"
 	L" -o, --output		- output png file\n"
 	L" -t, --text		- text string for convertsion into image\n"
 	L" -V, --version	- version info\n");
