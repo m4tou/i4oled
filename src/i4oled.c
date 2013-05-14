@@ -34,6 +34,8 @@
 #include <unistd.h>
 #include <wchar.h>
 
+#define OLED_WIDTH 64
+#define OLED_HEIGHT 32
 #define VER "1.0"
 #define SIZE 30
 #define MAX_LEN 10
@@ -113,10 +115,10 @@ void i4oled_text_to_image(struct params_s *params, cairo_surface_t *surface)
 	cairo_surface_flush(surface);
 	csurf = cairo_image_surface_get_data(surface);
 	i = 0;
-	for (y = 0; y < 32; y++) {
-		for (x = 0; x < (64 >> 1); x++) {
-			hi = 0xf0 & csurf[256 * y + 8 * x + 1];
-			lo = 0x0f & (csurf[256 * y + 8 * x + 5] >> 4);
+	for (y = 0; y < OLED_HEIGHT; y++) {
+		for (x = 0; x < (OLED_WIDTH >> 1); x++) {
+			hi = 0xf0 & csurf[4 * OLED_WIDTH * y + 8 * x + 1];
+			lo = 0x0f & (csurf[4 * OLED_WIDTH * y + 8 * x + 5] >> 4);
 			params->image[i] = hi | lo;
 			i++;
 		}
@@ -141,7 +143,7 @@ int i4oled_render_text(struct params_s *params)
 	strcat(buf, "\n");
 	strcat(buf, line2);
 
-	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 64, 32);
+	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, OLED_WIDTH, OLED_HEIGHT);
 	cr = cairo_create(surface);
 	cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.99);
 	cairo_paint(cr);
@@ -160,7 +162,7 @@ int i4oled_render_text(struct params_s *params)
 	width = width/PANGO_SCALE;
 	cairo_new_path(cr);
 
-	dx = trunc((64.0 - width)/2);
+	dx = trunc(((double)OLED_WIDTH - width)/2);
 
 	if (!strcmp(line2, ""))
 		dy = 10;
@@ -251,7 +253,7 @@ static int i4oled_read_image(struct params_s *params)
 	color_type = png_get_color_type(png_ptr, info_ptr);
 	bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 
-	if (width != 64 || height != 32) {
+	if (width != OLED_WIDTH || height != OLED_HEIGHT) {
 		ret = 1;
 		wprintf(L"Invalid image size: %dx%d, but expecting 64x32\n", width, height);
 		goto out;
@@ -333,15 +335,15 @@ static void i4oled_scramble(struct params_s *params)
 	for (i = 0; i < 1024; i++)
 		buf[i] = params->image[i];
 
-	for (y = 0; y < 16; y++) {
-		for (x = 0; x < 32; x++) {
-			l1 = (0x0F & (buf[31 - x + 64 * y]));
-			l2 = (0x0F & (buf[31 - x + 64 * y] >> 4));
-			h1 = (0xF0 & (buf[63 - x + 64 * y] << 4));
-			h2 = (0xF0 & (buf[63 - x + 64 * y]));
+	for (y = 0; y < (OLED_HEIGHT / 2); y++) {
+		for (x = 0; x < (OLED_WIDTH / 2); x++) {
+			l1 = (0x0F & (buf[OLED_HEIGHT - 1 - x + OLED_WIDTH * y]));
+			l2 = (0x0F & (buf[OLED_HEIGHT - 1 - x + OLED_WIDTH * y] >> 4));
+			h1 = (0xF0 & (buf[OLED_WIDTH - 1 - x + OLED_WIDTH * y] << 4));
+			h2 = (0xF0 & (buf[OLED_WIDTH - 1 - x + OLED_WIDTH * y]));
 
-			params->image[(2 * x) + (64 * y)] = h1 | l1;
-			params->image[(2 * x) + 1 + (64 * y)] = h2 | l2;
+			params->image[(2 * x) + (OLED_WIDTH * y)] = h1 | l1;
+			params->image[(2 * x) + 1 + (OLED_WIDTH * y)] = h2 | l2;
 		}
 	}
 }
