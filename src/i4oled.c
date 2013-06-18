@@ -39,6 +39,10 @@
 #define VER "1.0"
 #define SIZE 30
 #define MAX_LEN 10
+#define USB_COLOR_DEPTH 4 /*4 bits per pixel over USB */
+#define BT_COLOR_DEPTH 1 /*1 bit per pixel over bluetootb */
+#define USB_IMAGE_LEN OLED_WIDTH * OLED_HEIGHT * USB_COLOR_DEPTH / 8 /*OLED image size in bytes - USB mode*/
+#define BT_IMAGE_LEN OLED_WIDTH * OLED_HEIGHT * BT_COLOR_DEPTHT / 8 /*OLED image size in bytes - BT mode*/
 
 struct params_s {
 	char *device_filename;
@@ -303,7 +307,7 @@ out:
 static int i4oled_oled_write(struct params_s *params)
 {
 	int retval;
-	int length = 1024;
+	int length = USB_IMAGE_LEN;
 	int fd = -1;
 	int ret = 0;
 
@@ -328,11 +332,11 @@ out:
 
 static void i4oled_scramble(struct params_s *params)
 {
-	unsigned char buf[1024];
+	unsigned char buf[USB_IMAGE_LEN];
 	int x, y, i;
 	unsigned char l1, l2, h1, h2;
 
-	for (i = 0; i < 1024; i++)
+	for (i = 0; i < USB_IMAGE_LEN; i++)
 		buf[i] = params->image[i];
 
 	for (y = 0; y < (OLED_HEIGHT / 2); y++) {
@@ -423,7 +427,7 @@ int main(int argc, char **argv)
 	params.device_filename = NULL;
 	params.image_filename = NULL;
 	params.output_filename = NULL;
-	params.image = malloc(1024);
+	params.image = malloc(USB_IMAGE_LEN);
 	params.text[0] = (wchar_t)0x0;
 
 	if (argc < 2) {
