@@ -42,10 +42,11 @@
 #define USB_COLOR_DEPTH 4 /*4 bits per pixel over USB */
 #define BT_COLOR_DEPTH 1 /*1 bit per pixel over bluetootb */
 #define USB_IMAGE_LEN OLED_WIDTH * OLED_HEIGHT * USB_COLOR_DEPTH / 8 /*OLED image size in bytes - USB mode*/
-#define BT_IMAGE_LEN OLED_WIDTH * OLED_HEIGHT * BT_COLOR_DEPTHT / 8 /*OLED image size in bytes - BT mode*/
+#define BT_IMAGE_LEN OLED_WIDTH * OLED_HEIGHT * BT_COLOR_DEPTH / 8 /*OLED image size in bytes - BT mode*/
 
 struct params_s {
 	char *device_filename;
+	int bt_flag; /* 0 - default USB, 1 - bluetooth */
 	char *image_filename;
 	char *output_filename;
 	unsigned char *image;
@@ -115,16 +116,34 @@ void i4oled_text_to_image(struct params_s *params, cairo_surface_t *surface)
 	unsigned char *csurf;
 	int i, x, y;
 	unsigned char lo, hi;
+	unsigned char b0,b1,b2,b3,b4,b5,b6,b7;
 
 	cairo_surface_flush(surface);
 	csurf = cairo_image_surface_get_data(surface);
 	i = 0;
-	for (y = 0; y < OLED_HEIGHT; y++) {
-		for (x = 0; x < (OLED_WIDTH >> 1); x++) {
-			hi = 0xf0 & csurf[4 * OLED_WIDTH * y + 8 * x + 1];
-			lo = 0x0f & (csurf[4 * OLED_WIDTH * y + 8 * x + 5] >> 4);
-			params->image[i] = hi | lo;
-			i++;
+	if (!params->bt_flag) {
+		for (y = 0; y < OLED_HEIGHT; y++) {
+			for (x = 0; x < (OLED_WIDTH >> 1); x++) {
+				hi = 0xf0 & csurf[4 * OLED_WIDTH * y + 8 * x + 1];
+				lo = 0x0f & (csurf[4 * OLED_WIDTH * y + 8 * x + 5] >> 4);
+				params->image[i] = hi | lo;
+				i++;
+			}
+		}
+	} else {
+		for (y = 0; y < OLED_HEIGHT; y++) {
+			for (x = 0; x < (OLED_WIDTH >> 3); x++) {
+				b0 = 0b10000000 & (csurf[4 * OLED_WIDTH * y + 32 * x +  1] >> 0);
+				b1 = 0b01000000 & (csurf[4 * OLED_WIDTH * y + 32 * x +  5] >> 1);
+				b2 = 0b00100000 & (csurf[4 * OLED_WIDTH * y + 32 * x +  9] >> 2);
+				b3 = 0b00010000 & (csurf[4 * OLED_WIDTH * y + 32 * x + 13] >> 3);
+				b4 = 0b00001000 & (csurf[4 * OLED_WIDTH * y + 32 * x + 17] >> 4);
+				b5 = 0b00000100 & (csurf[4 * OLED_WIDTH * y + 32 * x + 21] >> 5);
+				b6 = 0b00000010 & (csurf[4 * OLED_WIDTH * y + 32 * x + 25] >> 6);
+				b7 = 0b00000001 & (csurf[4 * OLED_WIDTH * y + 32 * x + 29] >> 7);
+				params->image[i] = b0 | b1 | b2 | b3 | b4 | b5 | b6 | b7;
+				i++;
+			}
 		}
 	}
 }
@@ -157,7 +176,7 @@ int i4oled_render_text(struct params_s *params)
 	pango_layout_set_text(layout, buf, -1);
 	desc = pango_font_description_new();
 
-	pango_font_description_set_family(desc, "Terminal");
+	pango_font_description_set_family(desc, "DejaVu");
 	pango_font_description_set_absolute_size(desc, PANGO_SCALE * 11);
 	pango_layout_set_font_description(layout, desc);
 	pango_font_description_free(desc);
@@ -210,6 +229,7 @@ static int i4oled_read_image(struct params_s *params)
 	png_structp png_ptr;
 	png_infop info_ptr;
 	png_bytep *row_pointers;
+	unsigned char b0,b1,b2,b3,b4,b5,b6,b7;
 
 	FILE *fd = fopen(params->image_filename, "r");
 	if (!fd) {
@@ -288,13 +308,32 @@ static int i4oled_read_image(struct params_s *params)
 	png_set_packing(png_ptr);
 
 	i = 0;
-	for (y = 0; y < height; y++) {
-		png_byte *row = row_pointers[y];
-		for (x = 0; x < (width >> 1) ; x++) {
-			png_byte *ptr = &(row[x * 8]);
-			hi = 0xf0 & ptr[0];
-			lo = 0x0f & (ptr[4] >> 4);
-			params->image[i++] = hi | lo;
+	if (!params->bt_flag) {
+		for (y = 0; y < height; y++) {
+			png_byte *row = row_pointers[y];
+			for (x = 0; x < (width >> 1) ; x++) {
+				png_byte *ptr = &(row[x * 8]);
+				hi = 0xf0 & ptr[0];
+				lo = 0x0f & (ptr[4] >> 4);
+				params->image[i++] = hi | lo;
+			}
+		}
+	} else {
+		for (y = 0; y < OLED_HEIGHT; y++) {
+			png_byte *row = row_pointers[y];
+			for (x = 0; x < (OLED_WIDTH >> 3); x++) {
+				png_byte *ptr = &(row[x * 32]);
+				b0 = 0b10000000 & (ptr[ 1] >> 0);
+				b1 = 0b01000000 & (ptr[ 5] >> 1);
+				b2 = 0b00100000 & (ptr[ 9] >> 2);
+				b3 = 0b00010000 & (ptr[13] >> 3);
+				b4 = 0b00001000 & (ptr[17] >> 4);
+				b5 = 0b00000100 & (ptr[21] >> 5);
+				b6 = 0b00000010 & (ptr[25] >> 6);
+				b7 = 0b00000001 & (ptr[29] >> 7);
+				params->image[i] = b0 | b1 | b2 | b3 | b4 | b5 | b6 | b7;
+				i++;
+			}
 		}
 	}
 
@@ -307,9 +346,14 @@ out:
 static int i4oled_oled_write(struct params_s *params)
 {
 	int retval;
-	int length = USB_IMAGE_LEN;
+	int length;
 	int fd = -1;
 	int ret = 0;
+
+	if (params->bt_flag)
+		 length = BT_IMAGE_LEN;
+	else
+		 length = USB_IMAGE_LEN;
 
 	fd = open(params->device_filename, O_WRONLY);
 	if (fd < 0) {
@@ -336,18 +380,20 @@ static void i4oled_scramble(struct params_s *params)
 	int x, y, i;
 	unsigned char l1, l2, h1, h2;
 
-	for (i = 0; i < USB_IMAGE_LEN; i++)
-		buf[i] = params->image[i];
+	if (!params->bt_flag) {
+		for (i = 0; i < USB_IMAGE_LEN; i++)
+			buf[i] = params->image[i];
 
-	for (y = 0; y < (OLED_HEIGHT / 2); y++) {
-		for (x = 0; x < (OLED_WIDTH / 2); x++) {
-			l1 = (0x0F & (buf[OLED_HEIGHT - 1 - x + OLED_WIDTH * y]));
-			l2 = (0x0F & (buf[OLED_HEIGHT - 1 - x + OLED_WIDTH * y] >> 4));
-			h1 = (0xF0 & (buf[OLED_WIDTH - 1 - x + OLED_WIDTH * y] << 4));
-			h2 = (0xF0 & (buf[OLED_WIDTH - 1 - x + OLED_WIDTH * y]));
+		for (y = 0; y < (OLED_HEIGHT / 2); y++) {
+			for (x = 0; x < (OLED_WIDTH / 2); x++) {
+				l1 = (0x0F & (buf[OLED_HEIGHT - 1 - x + OLED_WIDTH * y]));
+				l2 = (0x0F & (buf[OLED_HEIGHT - 1 - x + OLED_WIDTH * y] >> 4));
+				h1 = (0xF0 & (buf[OLED_WIDTH - 1 - x + OLED_WIDTH * y] << 4));
+				h2 = (0xF0 & (buf[OLED_WIDTH - 1 - x + OLED_WIDTH * y]));
 
-			params->image[(2 * x) + (OLED_WIDTH * y)] = h1 | l1;
-			params->image[(2 * x) + 1 + (OLED_WIDTH * y)] = h2 | l2;
+				params->image[(2 * x) + (OLED_WIDTH * y)] = h1 | l1;
+				params->image[(2 * x) + 1 + (OLED_WIDTH * y)] = h2 | l2;
+			}
 		}
 	}
 }
@@ -365,6 +411,7 @@ static void i4oled_usage(void)
 	L"Usage: i4oled [options] [device image]\n"
 	L"Options:\n"
 	L" -h, --help		- usage\n"
+	L" -b, --bluetooth	- bluetooth mode, OLED image will be 1-bit\n"
 	L" -d, --device		- path to OLED sysfs entry\n"
 	L" -i, --image		- image to be rendered on OLED display\n"
 	L" -o, --output		- output png file\n"
@@ -409,12 +456,13 @@ int main(int argc, char **argv)
 	int optidx;
 	struct params_s params;
 	struct option options[] = {
-		{"help", 0, NULL, 0},
-		{"device", 0, NULL, 0},
-		{"image", 0, NULL, 0},
-		{"output", 0, NULL, 0},
-		{"text", 0, NULL, 0},
-		{"version", 0, NULL, 0},
+		{"bluetooth", 0, NULL, 0},
+		{"help", 0, NULL, 'h'},
+		{"device", 1, NULL, 'd'},
+		{"image", 1, NULL, 'i'},
+		{"output", 1, NULL, 'o'},
+		{"text", 1, NULL, 't'},
+		{"version", 0, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -425,6 +473,7 @@ int main(int argc, char **argv)
 	}
 
 	params.device_filename = NULL;
+	params.bt_flag = 0;
 	params.image_filename = NULL;
 	params.output_filename = NULL;
 	params.image = malloc(USB_IMAGE_LEN);
@@ -436,27 +485,30 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	while ((c = getopt_long(argc, argv, "hd:i:o:t:V", options, &optidx)) != -1) {
+	while ((c = getopt_long(argc, argv, "bhd:i:o:t:V", options, &optidx)) != -1) {
 		switch (c) {
 		case 0:
 			switch (optidx) {
 			case 0:
+				params.bt_flag = 1;
+				break;
+			case 1:
 				i4oled_usage();
 				ret = 0;
 				goto out;
-			case 1:
+			case 2:
 				params.device_filename = argv[optind];
 				device_present++;
 				break;
-			case 2:
+			case 3:
 				params.image_filename = argv[optind];
 				input_present++;
 				break;
-			case 3:
+			case 4:
 				params.output_filename = argv[optind];
 				output_present++;
 				break;
-			case 4:
+			case 5:
 				if (i4oled_acquire_text(&params, argv[optind])) {
 					ret = 1;
 					goto out;
@@ -469,6 +521,9 @@ int main(int argc, char **argv)
 				goto out;
 		}
 		break;
+		case 'b':
+			params.bt_flag = 1;
+			break;
 		case 'd':
 			params.device_filename = argv[optind-1];
 			device_present++;
