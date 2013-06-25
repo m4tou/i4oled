@@ -1,4 +1,1 @@
-Make i4oled work over bluetooth (currently only usb). It requires recognising type of device.
-"Bluetooth" icons are 1-bit, so some other internal changes will also be required.
-
 Consider adding base64 encode/decode to match (not-so-distant-future) gnome gsd-wacom-oled-helper
