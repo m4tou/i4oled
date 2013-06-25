@@ -36,7 +36,7 @@
 
 #define OLED_WIDTH 64
 #define OLED_HEIGHT 32
-#define VER "1.0"
+#define VER "1.1"
 #define SIZE 30
 #define MAX_LEN 10
 #define USB_COLOR_DEPTH 4 /*4 bits per pixel over USB */
