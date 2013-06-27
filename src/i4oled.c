@@ -416,14 +416,21 @@ static void i4oled_usage(void)
 	L" -i, --image		- image to be rendered on OLED display\n"
 	L" -o, --output		- output png file\n"
 	L" -t, --text		- text string for convertsion into image\n"
-	L" -V, --version	- version info\n");
+	L" -V, --version		- version info\n");
 
 	wprintf(
 	L"Usage:\n"
 	L"i4oled --text \"Ctrl+Alt A\" --output ctrl_alt_A.png renders text to PNG image\n"
 	L"i4oled --image ctrl_alt_A --device  /sys/bus/usb/drivers/wacom/3-1.2:1.0/wacom_led/button0_rawimg\n"
-	L"Make sure OLED brightness is set, otherwise icons will be black\n"
+	L"i4oled -d /sys/bus/hid/drivers/wacom/0005:056A:00BD.0001/oled0_img -t \"Alt+Ctrl+Enter\" --bluetooth\n"
+	L"\n"
+	L"Make sure OLED brightness is set, otherwise icons will be black.\n"
+	L"\n"
+	L"USB:\n"
 	L"echo 200 > /sys/bus/usb/drivers/wacom/3-1.2:1.0/wacom_led/buttons_luminance\n"
+	L"Bluetooth:\n"
+	L"echo 120 > /sys/class/leds/0005:056A:00BD.0001:selector:0/brightness\n"
+	L"\n"
 	L"Expected image format is:\n"
 	L"PNG image file, has to be 64 x 32, 8-bit/color RGBA, non-interlaced\n");
 }
