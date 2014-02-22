@@ -36,8 +36,9 @@
 
 #define OLED_WIDTH 64
 #define OLED_HEIGHT 32
-#define VER "1.1"
+#define VER "1.2"
 #define SIZE 30
+#define MAGIC_BASE64 "base64:" 
 #define MAX_LEN 10
 #define USB_COLOR_DEPTH 4 /*4 bits per pixel over USB */
 #define BT_COLOR_DEPTH 1 /*1 bit per pixel over bluetootb */
@@ -52,6 +53,17 @@ struct params_s {
 	unsigned char *image;
 	wchar_t text[SIZE+1];
 };
+
+void i4oled_generate_base64(struct params_s *params)
+{
+	char *base_string, *base64;
+	
+	base_string = g_base64_encode (params->image, USB_IMAGE_LEN);
+        base64 = g_strconcat (MAGIC_BASE64, base_string, NULL);
+        free (base_string);
+	wprintf(L"%s\n", base64);
+        free (base64);
+}
 
 void i4oled_split_text(wchar_t *source, char *line1, char *line2)
 {
@@ -199,8 +211,7 @@ int i4oled_render_text(struct params_s *params)
 	pango_cairo_layout_path(cr, layout);
 	cairo_fill(cr);
 
-	if (params->device_filename)
-		i4oled_text_to_image(params, surface);
+	i4oled_text_to_image(params, surface);
 
 	g_object_unref(layout);
 	cairo_destroy(cr);
@@ -415,6 +426,7 @@ static void i4oled_usage(void)
 	L" -d, --device		- path to OLED sysfs entry\n"
 	L" -i, --image		- image to be rendered on OLED display\n"
 	L" -o, --output		- output png file\n"
+	L" -s, --base64		- output to base64 encoded string\n"
 	L" -t, --text		- text string for convertsion into image\n"
 	L" -V, --version		- version info\n");
 
@@ -459,6 +471,7 @@ int main(int argc, char **argv)
 	int c, ret = 0;
 	int input_present = 0;
 	int output_present = 0;
+	int base64_present = 0;
 	int device_present = 0;
 	int optidx;
 	struct params_s params;
@@ -468,6 +481,7 @@ int main(int argc, char **argv)
 		{"device", 1, NULL, 'd'},
 		{"image", 1, NULL, 'i'},
 		{"output", 1, NULL, 'o'},
+		{"base64", 1, NULL, 'o'},
 		{"text", 1, NULL, 't'},
 		{"version", 0, NULL, 'v'},
 		{NULL, 0, NULL, 0}
@@ -492,7 +506,7 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	while ((c = getopt_long(argc, argv, "bhd:i:o:t:V", options, &optidx)) != -1) {
+	while ((c = getopt_long(argc, argv, "bhd:i:o:st:V", options, &optidx)) != -1) {
 		switch (c) {
 		case 0:
 			switch (optidx) {
@@ -516,13 +530,17 @@ int main(int argc, char **argv)
 				output_present++;
 				break;
 			case 5:
+				base64_present++;
+				output_present++;
+				break;
+			case 6:
 				if (i4oled_acquire_text(&params, argv[optind])) {
 					ret = 1;
 					goto out;
 				}
 				input_present++;
 				break;
-			case 6:
+			case 7:
 				i4oled_version();
 				ret = 0;
 				goto out;
@@ -541,6 +559,10 @@ int main(int argc, char **argv)
 			break;
 		case 'o':
 			params.output_filename = argv[optind-1];
+			output_present++;
+			break;
+		case 's':
+			base64_present++;
 			output_present++;
 			break;
 		case 't':
@@ -569,7 +591,7 @@ int main(int argc, char **argv)
 	}
 
 	if ((!output_present) && (!device_present)) {
-		wprintf(L"Please meke sure that there is an output specified with --device or --output\n");
+		wprintf(L"Please make sure that there is an output specified with --device, --output or --base64\n");
 		ret = 1;
 		goto out;
 	}
@@ -597,11 +619,15 @@ int main(int argc, char **argv)
 		}
 	}
 
+	i4oled_scramble(&params);
+
 	if (params.device_filename) {
-		i4oled_scramble(&params);
 		ret = i4oled_oled_write(&params);
 	}
 
+	if (base64_present) {
+		i4oled_generate_base64(&params);
+	}
 out:
 	free(params.image);
 	return ret;
