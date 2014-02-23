@@ -315,7 +315,6 @@ static int i4oled_read_image(struct params_s *params)
 		row_pointers[y] = (png_byte *) malloc(png_get_rowbytes(png_ptr, info_ptr));
 
 	png_read_image(png_ptr, row_pointers);
-	png_set_strip_16(png_ptr);
 	png_set_packing(png_ptr);
 
 	i = 0;
@@ -347,6 +346,7 @@ static int i4oled_read_image(struct params_s *params)
 			}
 		}
 	}
+wprintf(L"50\n");
 
 out:
 	if (fd)
