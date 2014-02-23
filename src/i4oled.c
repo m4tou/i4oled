@@ -24,6 +24,7 @@
 
 #include <fcntl.h>
 #include <getopt.h>
+#include <glib.h>
 #include <math.h>
 #include <locale.h>
 #include <png.h>
@@ -31,6 +32,7 @@
 #include <pango/pango.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <wchar.h>
 
@@ -38,7 +40,8 @@
 #define OLED_HEIGHT 32
 #define VER "1.2"
 #define SIZE 30
-#define MAGIC_BASE64 "base64:" 
+#define MAGIC_BASE64 "base64:"
+#define MAGIC_BASE64_LEN strlen(MAGIC_BASE64)
 #define MAX_LEN 10
 #define USB_COLOR_DEPTH 4 /*4 bits per pixel over USB */
 #define BT_COLOR_DEPTH 1 /*1 bit per pixel over bluetootb */
@@ -50,6 +53,7 @@ struct params_s {
 	int bt_flag; /* 0 - default USB, 1 - bluetooth */
 	char *image_filename;
 	char *output_filename;
+	char *input_base64;
 	unsigned char *image;
 	wchar_t text[SIZE+1];
 };
@@ -63,6 +67,16 @@ void i4oled_generate_base64(struct params_s *params)
         free (base_string);
 	wprintf(L"%s\n", base64);
         free (base64);
+}
+
+void i4oled_render_base64(struct params_s *params)
+{
+	char *base_string;
+	gsize length;
+
+	base_string = g_strdup (params->input_base64 + MAGIC_BASE64_LEN);
+	params->image = g_base64_decode ((const char*)base_string, &length);
+	free (base_string);
 }
 
 void i4oled_split_text(wchar_t *source, char *line1, char *line2)
@@ -424,8 +438,9 @@ static void i4oled_usage(void)
 	L" -b, --bluetooth	- bluetooth mode, OLED image will be 1-bit\n"
 	L" -d, --device		- path to OLED sysfs entry\n"
 	L" -i, --image		- image to be rendered on OLED display\n"
+	L" -a, --ibase64	- base64 encoded string as input \n"
 	L" -o, --output		- output png file\n"
-	L" -s, --base64		- output to base64 encoded string\n"
+	L" -s, --obase64	- output to base64 encoded string\n"
 	L" -t, --text		- text string for convertsion into image\n"
 	L" -V, --version		- version info\n");
 
@@ -495,6 +510,7 @@ int main(int argc, char **argv)
 	params.device_filename = NULL;
 	params.bt_flag = 0;
 	params.image_filename = NULL;
+	params.input_base64 = NULL;
 	params.output_filename = NULL;
 	params.image = malloc(USB_IMAGE_LEN);
 	params.text[0] = (wchar_t)0x0;
@@ -505,7 +521,7 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	while ((c = getopt_long(argc, argv, "bhd:i:o:st:V", options, &optidx)) != -1) {
+	while ((c = getopt_long(argc, argv, "bhd:i:a:o:st:V", options, &optidx)) != -1) {
 		switch (c) {
 		case 0:
 			switch (optidx) {
@@ -519,27 +535,32 @@ int main(int argc, char **argv)
 			case 2:
 				params.device_filename = argv[optind];
 				device_present++;
+				output_present++;
 				break;
 			case 3:
 				params.image_filename = argv[optind];
 				input_present++;
 				break;
 			case 4:
+				params.input_base64 = argv[optind];
+				input_present++;
+				break;
+			case 5:
 				params.output_filename = argv[optind];
 				output_present++;
 				break;
-			case 5:
+			case 6:
 				base64_present++;
 				output_present++;
 				break;
-			case 6:
+			case 7:
 				if (i4oled_acquire_text(&params, argv[optind])) {
 					ret = 1;
 					goto out;
 				}
 				input_present++;
 				break;
-			case 7:
+			case 8:
 				i4oled_version();
 				ret = 0;
 				goto out;
@@ -551,9 +572,14 @@ int main(int argc, char **argv)
 		case 'd':
 			params.device_filename = argv[optind-1];
 			device_present++;
+			output_present++;
 			break;
 		case 'i':
 			params.image_filename = argv[optind-1];
+			input_present++;
+			break;
+		case 'a':
+			params.input_base64 = argv[optind-1];
 			input_present++;
 			break;
 		case 'o':
@@ -600,11 +626,16 @@ int main(int argc, char **argv)
 		ret = 1;
 		goto out;
 	}
-
+/*
 	if (output_present > 1) {
 		wprintf(L"Multiple --output options are not allowed\n");
 		ret = 1;
 		goto out;
+	}
+*/
+	if (params.input_base64) {
+		wprintf(L"1\n");
+		i4oled_render_base64(&params);
 	}
 
 	if (params.image_filename)
