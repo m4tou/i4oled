@@ -19,7 +19,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Authors:
- *      Przemo Firszt (przemo@firszt.eu)
+ *	Przemo Firszt (przemo@firszt.eu)
  */
 
 #include <fcntl.h>
@@ -61,10 +61,10 @@ void i4oled_generate_base64(struct params_s *params)
 	char *base_string, *base64;
 	
 	base_string = g_base64_encode (params->image, USB_IMAGE_LEN);
-        base64 = g_strconcat (MAGIC_BASE64, base_string, NULL);
-        free (base_string);
+	base64 = g_strconcat (MAGIC_BASE64, base_string, NULL);
+	free (base_string);
 	wprintf(L"%s\n", base64);
-        free (base64);
+	free (base64);
 }
 
 void i4oled_render_base64(struct params_s *params)
@@ -72,8 +72,8 @@ void i4oled_render_base64(struct params_s *params)
 	char *base_string;
 
 	base_string = g_strdup (params->input_base64 + MAGIC_BASE64_LEN);
-        params->image = g_base64_decode (&base_string, USB_IMAGE_LEN);
-        free (base_string);
+	params->image = g_base64_decode (&base_string, USB_IMAGE_LEN);
+	free (base_string);
 }
 
 void i4oled_split_text(wchar_t *source, char *line1, char *line2)
