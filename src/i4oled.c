@@ -24,6 +24,7 @@
 
 #include <fcntl.h>
 #include <getopt.h>
+#include <glib.h>
 #include <math.h>
 #include <locale.h>
 #include <png.h>
@@ -31,6 +32,7 @@
 #include <pango/pango.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <wchar.h>
 
@@ -70,10 +72,16 @@ void i4oled_generate_base64(struct params_s *params)
 void i4oled_render_base64(struct params_s *params)
 {
 	char *base_string;
+	unsigned char *buf;
 
+	wprintf(L"2a\n");
 	base_string = g_strdup (params->input_base64 + MAGIC_BASE64_LEN);
-	params->image = g_base64_decode (&base_string, USB_IMAGE_LEN);
+	wprintf(L"3 base_string: %s\n", base_string);
+	//params->image 
+	buf = g_base64_decode ((const char*)base_string, (gsize*)(USB_IMAGE_LEN));
+	wprintf(L"4\n");
 	free (base_string);
+	free (buf);
 }
 
 void i4oled_split_text(wchar_t *source, char *line1, char *line2)
@@ -532,6 +540,7 @@ int main(int argc, char **argv)
 			case 2:
 				params.device_filename = argv[optind];
 				device_present++;
+				output_present++;
 				break;
 			case 3:
 				params.image_filename = argv[optind];
@@ -568,13 +577,14 @@ int main(int argc, char **argv)
 		case 'd':
 			params.device_filename = argv[optind-1];
 			device_present++;
+			output_present++;
 			break;
 		case 'i':
 			params.image_filename = argv[optind-1];
 			input_present++;
 			break;
 		case 'a':
-			params.input_base64 = argv[optind];
+			params.input_base64 = argv[optind-1];
 			input_present++;
 			break;
 		case 'o':
@@ -621,14 +631,15 @@ int main(int argc, char **argv)
 		ret = 1;
 		goto out;
 	}
-
+/*
 	if (output_present > 1) {
 		wprintf(L"Multiple --output options are not allowed\n");
 		ret = 1;
 		goto out;
 	}
-
+*/
 	if (params.input_base64) {
+		wprintf(L"1\n");
 		i4oled_render_base64(&params);
 	}
 
@@ -650,6 +661,7 @@ int main(int argc, char **argv)
 	}
 
 	if (base64_present) {
+		wprintf(L"10\n");
 		i4oled_generate_base64(&params);
 	}
 out:
