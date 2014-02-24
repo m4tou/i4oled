@@ -1,2 +1,4 @@
 Consider adding base64 encode/decode to match (not-so-distant-future) gnome gsd-wacom-oled-helper
 Fix i4oled_scramble - it works, but WIDTH/HEIGHTS are used in wrong way
+Add glib check
+Add string.h check
