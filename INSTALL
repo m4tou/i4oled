@@ -1,7 +1,7 @@
 Installation Instructions
 *************************
 
-Copyright (C) 1994-1996, 1999-2002, 2004-2012 Free Software Foundation,
+Copyright (C) 1994-1996, 1999-2002, 2004-2013 Free Software Foundation,
 Inc.
 
    Copying and distribution of this file, with or without modification,
@@ -12,10 +12,7 @@ without warranty of any kind.
 Basic Installation
 ==================
 
-   Briefly, the shell commands 
-
-./autogen.sh; ./configure; make; make install
-
+   Briefly, the shell commands `./autogen.sh; ./configure; make; make install'
 should configure, build, and install this package.  The following
 more-detailed instructions are generic; see the `README' file for
 instructions specific to this package.  Some packages provide this
@@ -54,7 +51,7 @@ of `autoconf'.
    The simplest way to compile this package is:
 
   1. `cd' to the directory containing the package's source code and type
-     `./autogen.sh; ./configure' to configure the package for your system.
+     `./autogen.sh && ./configure' to configure the package for your system.
 
      Running `configure' might take a while.  While running, it prints
      some messages telling which features it is checking for.
