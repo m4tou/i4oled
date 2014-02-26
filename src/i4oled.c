@@ -438,9 +438,9 @@ static void i4oled_usage(void)
 	L" -b, --bluetooth	- bluetooth mode, OLED image will be 1-bit\n"
 	L" -d, --device		- path to OLED sysfs entry\n"
 	L" -i, --image		- image to be rendered on OLED display\n"
-	L" -a, --ibase64	- base64 encoded string as input \n"
+	L" -a, --ibase64		- base64 encoded string as input \n"
 	L" -o, --output		- output png file\n"
-	L" -s, --obase64	- output to base64 encoded string\n"
+	L" -s, --obase64		- output to base64 encoded string\n"
 	L" -t, --text		- text string for convertsion into image\n"
 	L" -V, --version		- version info\n");
 
