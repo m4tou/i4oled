@@ -626,13 +626,13 @@ int main(int argc, char **argv)
 		ret = 1;
 		goto out;
 	}
-/*
-	if (output_present > 1) {
-		wprintf(L"Multiple --output options are not allowed\n");
+
+	if (!output_present) {
+		wprintf(L"At least one output must be secified\n");
 		ret = 1;
 		goto out;
 	}
-*/
+
 	if (params.input_base64) {
 		wprintf(L"1\n");
 		i4oled_render_base64(&params);
