@@ -42,7 +42,7 @@
 #define SIZE 30
 #define MAGIC_BASE64 "base64:"
 #define MAGIC_BASE64_LEN strlen(MAGIC_BASE64)
-#define MAX_LEN 10
+#define MAX_LINE_LEN 10
 #define USB_COLOR_DEPTH 4 /*4 bits per pixel over USB */
 #define BT_COLOR_DEPTH 1 /*1 bit per pixel over bluetootb */
 #define USB_IMAGE_LEN OLED_WIDTH * OLED_HEIGHT * USB_COLOR_DEPTH / 8 /*OLED image size in bytes - USB mode*/
@@ -92,16 +92,16 @@ void i4oled_split_text(wchar_t *source, char *line1, char *line2)
 	size_t length, l;
 
 	wcscpy(buf, source);
-	if (wcslen(buf) <= MAX_LEN) {
-		wcsncpy(wcsline1, source, MAX_LEN);
+	if (wcslen(buf) <= MAX_LINE_LEN) {
+		wcsncpy(wcsline1, source, MAX_LINE_LEN);
 		goto out;
 	}
 
 	token = wcstok(buf, delimiters, &state);
 
-	if (wcslen(token) > MAX_LEN) {
-		wcsncpy(wcsline1, source, MAX_LEN);
-		wcsncpy(wcsline2, source + MAX_LEN, SIZE - MAX_LEN);
+	if (wcslen(token) > MAX_LINE_LEN) {
+		wcsncpy(wcsline1, source, MAX_LINE_LEN);
+		wcsncpy(wcsline2, source + MAX_LINE_LEN, SIZE - MAX_LINE_LEN);
 		goto out;
 	}
 
@@ -117,7 +117,7 @@ void i4oled_split_text(wchar_t *source, char *line1, char *line2)
 
 	i = 0;
 	length = token_len[i];
-	while ((length + token_len[i + 1] + 1) <= MAX_LEN) {
+	while ((length + token_len[i + 1] + 1) <= MAX_LINE_LEN) {
 		i++;
 		length = length + token_len[i] + 1;
 	}
@@ -125,7 +125,7 @@ void i4oled_split_text(wchar_t *source, char *line1, char *line2)
 	wcsncpy(wcsline1, source, length);
 	wcsncpy(wcsline2, source + length + 1, SIZE - length);
 out:
-	l = wcstombs(line1, wcsline1, MAX_LEN);
+	l = wcstombs(line1, wcsline1, MAX_LINE_LEN);
 	if (l == -1)
 		wprintf(L"Invalid character sequance - please try a different text\n");
 
