@@ -38,7 +38,7 @@
 
 #define OLED_WIDTH 64
 #define OLED_HEIGHT 32
-#define VER "1.2-rc1"
+#define VER "1.2-rc2"
 #define SIZE 30
 #define MAGIC_BASE64 "base64:"
 #define MAGIC_BASE64_LEN strlen(MAGIC_BASE64)
