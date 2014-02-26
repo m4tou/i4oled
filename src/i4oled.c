@@ -24,6 +24,7 @@
 
 #include <fcntl.h>
 #include <getopt.h>
+#include <glib.h>
 #include <math.h>
 #include <locale.h>
 #include <png.h>
@@ -31,16 +32,17 @@
 #include <pango/pango.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <wchar.h>
 
 #define OLED_WIDTH 64
 #define OLED_HEIGHT 32
-#define VER "1.2-rc1"
+#define VER "1.2-rc2"
 #define SIZE 30
 #define MAGIC_BASE64 "base64:"
 #define MAGIC_BASE64_LEN strlen(MAGIC_BASE64)
-#define MAX_LEN 10
+#define MAX_LINE_LEN 10
 #define USB_COLOR_DEPTH 4 /*4 bits per pixel over USB */
 #define BT_COLOR_DEPTH 1 /*1 bit per pixel over bluetootb */
 #define USB_IMAGE_LEN OLED_WIDTH * OLED_HEIGHT * USB_COLOR_DEPTH / 8 /*OLED image size in bytes - USB mode*/
@@ -70,9 +72,10 @@ void i4oled_generate_base64(struct params_s *params)
 void i4oled_render_base64(struct params_s *params)
 {
 	char *base_string;
+	gsize length;
 
 	base_string = g_strdup (params->input_base64 + MAGIC_BASE64_LEN);
-	params->image = g_base64_decode (&base_string, USB_IMAGE_LEN);
+	params->image = g_base64_decode ((const char*)base_string, &length);
 	free (base_string);
 }
 
@@ -89,16 +92,16 @@ void i4oled_split_text(wchar_t *source, char *line1, char *line2)
 	size_t length, l;
 
 	wcscpy(buf, source);
-	if (wcslen(buf) <= MAX_LEN) {
-		wcsncpy(wcsline1, source, MAX_LEN);
+	if (wcslen(buf) <= MAX_LINE_LEN) {
+		wcsncpy(wcsline1, source, MAX_LINE_LEN);
 		goto out;
 	}
 
 	token = wcstok(buf, delimiters, &state);
 
-	if (wcslen(token) > MAX_LEN) {
-		wcsncpy(wcsline1, source, MAX_LEN);
-		wcsncpy(wcsline2, source + MAX_LEN, SIZE - MAX_LEN);
+	if (wcslen(token) > MAX_LINE_LEN) {
+		wcsncpy(wcsline1, source, MAX_LINE_LEN);
+		wcsncpy(wcsline2, source + MAX_LINE_LEN, SIZE - MAX_LINE_LEN);
 		goto out;
 	}
 
@@ -114,7 +117,7 @@ void i4oled_split_text(wchar_t *source, char *line1, char *line2)
 
 	i = 0;
 	length = token_len[i];
-	while ((length + token_len[i + 1] + 1) <= MAX_LEN) {
+	while ((length + token_len[i + 1] + 1) <= MAX_LINE_LEN) {
 		i++;
 		length = length + token_len[i] + 1;
 	}
@@ -122,7 +125,7 @@ void i4oled_split_text(wchar_t *source, char *line1, char *line2)
 	wcsncpy(wcsline1, source, length);
 	wcsncpy(wcsline2, source + length + 1, SIZE - length);
 out:
-	l = wcstombs(line1, wcsline1, MAX_LEN);
+	l = wcstombs(line1, wcsline1, MAX_LINE_LEN);
 	if (l == -1)
 		wprintf(L"Invalid character sequance - please try a different text\n");
 
@@ -427,28 +430,36 @@ static void i4oled_version(void)
 static void i4oled_usage(void)
 {
 	wprintf(
-	L"\n"
 	L"i4oled sets OLED icon on Intuos4 tablets. Also converts text to png image ready for use as Intuos4 OLED icon.\n"
 	L"Usage: i4oled [options] [device image]\n"
-	L"Options:\n"
+	L"Options:\n\n"
 	L" -h, --help		- usage\n"
 	L" -b, --bluetooth	- bluetooth mode, OLED image will be 1-bit\n"
-	L" -d, --device		- path to OLED sysfs entry\n"
-	L" -i, --image		- image to be rendered on OLED display\n"
-	L" -a, --ibase64	- base64 encoded string as input \n"
-	L" -o, --output		- output png file\n"
-	L" -s, --obase64	- output to base64 encoded string\n"
-	L" -t, --text		- text string for convertsion into image\n"
-	L" -V, --version		- version info\n");
+	L" -d, --device		- path to OLED sysfs entry [o]\n"
+	L" -i, --image		- image to be rendered on OLED display [i]\n"
+	L" -a, --ibase64		- base64 encoded string as input [i]\n"
+	L" -o, --output		- output png file [o]\n"
+	L" -s, --obase64		- output to base64 encoded string [o]\n"
+	L" -t, --text		- text string for convertsion into image [i]\n"
+	L" -V, --version		- version info\n\n"
+	L"[i] denotes input, [o] - output. Exactly one input and at least one output must be present\n");
 
 	wprintf(
-	L"Usage:\n"
-	L"i4oled --text \"Ctrl+Alt A\" --output ctrl_alt_A.png renders text to PNG image\n"
-	L"i4oled --image ctrl_alt_A --device  /sys/bus/usb/drivers/wacom/3-1.2:1.0/wacom_led/button0_rawimg\n"
+	L"Typical usage:\n"
+	L"\n"
+	L"Render text to PNG image\n"
+	L"i4oled --text \"Ctrl+Alt A\" --output ctrl_alt_A.png\n"
+	L"\n"
+	L"Render image to OLED display\n"
+	L"i4oled --image ctrl_alt_A.png --device  /sys/bus/usb/drivers/wacom/3-1.2:1.0/wacom_led/button0_rawimg\n"
+	L"\n"
+	L"Render text directly to OLED display over bluetooth\n"
 	L"i4oled -d /sys/bus/hid/drivers/wacom/0005:056A:00BD.0001/oled0_img -t \"Alt+Ctrl+Enter\" --bluetooth\n"
 	L"\n"
-	L"Make sure OLED brightness is set, otherwise icons will be black.\n"
+	L"Convert MY TEXT into image encoded with base64\n"
+	L"i4oled -t \"MY TEXT\" -s\n"
 	L"\n"
+	L"Make sure OLED brightness is set, otherwise icons will be black:\n"
 	L"USB:\n"
 	L"echo 200 > /sys/bus/usb/drivers/wacom/3-1.2:1.0/wacom_led/buttons_luminance\n"
 	L"Bluetooth:\n"
@@ -532,6 +543,7 @@ int main(int argc, char **argv)
 			case 2:
 				params.device_filename = argv[optind];
 				device_present++;
+				output_present++;
 				break;
 			case 3:
 				params.image_filename = argv[optind];
@@ -568,13 +580,14 @@ int main(int argc, char **argv)
 		case 'd':
 			params.device_filename = argv[optind-1];
 			device_present++;
+			output_present++;
 			break;
 		case 'i':
 			params.image_filename = argv[optind-1];
 			input_present++;
 			break;
 		case 'a':
-			params.input_base64 = argv[optind];
+			params.input_base64 = argv[optind-1];
 			input_present++;
 			break;
 		case 'o':
@@ -622,8 +635,8 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	if (output_present > 1) {
-		wprintf(L"Multiple --output options are not allowed\n");
+	if (!output_present) {
+		wprintf(L"At least one output must be secified\n");
 		ret = 1;
 		goto out;
 	}
