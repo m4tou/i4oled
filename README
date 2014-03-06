@@ -47,6 +47,14 @@ libglib2.0-dev libevent-dev checkinstall
 as suggested here:
 http://ubuntuforums.org/showthread.php?t=1380744&page=32&p=12579689#post12579689
 
-Fedora 20 users:
+Fedora users: if you see something like during configure stage:
+[..]
+configure: error: Package requirements (pangocairo >= 1.29.0) were not met:
+
+No package 'pangocairo' found
+[..]
+
+install pango-devel.
 
 sudo yum install autoconf automake gcc pango-devel
+
