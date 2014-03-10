@@ -21,7 +21,6 @@ AC_CHECK_HEADER(string.h, [], [a=0])
 # Checks for typedefs, structures, and compiler characteristics.
 
 # Checks for library functions.
-AC_CHECK_LIB([glib], [g_base64_encode],,[])
 AC_CHECK_LIB([png], [png_read_image],,[])
 AC_CHECK_LIB([m], [trunc],,[])
 
