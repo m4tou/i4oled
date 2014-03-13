@@ -656,14 +656,14 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (base64_present) {
+		i4oled_generate_base64(&params);
+	}
+
 	i4oled_scramble(&params);
 
 	if (params.device_filename) {
 		ret = i4oled_oled_write(&params);
-	}
-
-	if (base64_present) {
-		i4oled_generate_base64(&params);
 	}
 out:
 	free(params.image);
