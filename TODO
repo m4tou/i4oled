@@ -1,1 +1,2 @@
 Fix i4oled_scramble - it works, but WIDTH/HEIGHTS are used in wrong way
+Fix double ver numeration (configure.sc and i4oled.c)
