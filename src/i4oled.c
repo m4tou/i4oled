@@ -624,7 +624,7 @@ int main(int argc, char **argv)
 	}
 
 	if ((!output_present) && (!device_present)) {
-		wprintf(L"Please make sure that there is an output specified with --device, --output or --base64\n");
+		wprintf(L"Please make sure that there is an output specified with --device, --output or --obase64\n");
 		ret = 1;
 		goto out;
 	}
