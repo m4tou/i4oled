@@ -541,7 +541,6 @@ int main(int argc, char **argv)
 	int output_present = 0;
 	int base64_present = 0;
 	int device_present = 0;
-	int optidx;
 	struct params_s params;
 	struct option options[] = {
 		{"scrambled_bluetooth", 0, NULL, 'B'},
@@ -577,54 +576,8 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	while ((c = getopt_long(argc, argv, "Bbhd:i:a:o:st:V", options, &optidx)) != -1) {
+	while ((c = getopt_long(argc, argv, "Bbhd:i:a:o:st:V", options, NULL)) != -1) {
 		switch (c) {
-		case 0:
-			switch (optidx) {
-			case 0:
-				params.bt_flag = 2;
-				break;
-			case 1:
-				params.bt_flag = 1;
-				break;
-			case 2:
-				i4oled_usage();
-				ret = 0;
-				goto out;
-			case 3:
-				params.device_filename = argv[optind];
-				device_present++;
-				output_present++;
-				break;
-			case 4:
-				params.image_filename = argv[optind];
-				input_present++;
-				break;
-			case 5:
-				params.input_base64 = argv[optind];
-				input_present++;
-				break;
-			case 6:
-				params.output_filename = argv[optind];
-				output_present++;
-				break;
-			case 7:
-				base64_present++;
-				output_present++;
-				break;
-			case 8:
-				if (i4oled_acquire_text(&params, argv[optind])) {
-					ret = 1;
-					goto out;
-				}
-				input_present++;
-				break;
-			case 9:
-				i4oled_version();
-				ret = 0;
-				goto out;
-		}
-		break;
 		case 'B':
 			params.bt_flag = 2;
 			break;
