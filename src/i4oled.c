@@ -544,15 +544,16 @@ int main(int argc, char **argv)
 	int optidx;
 	struct params_s params;
 	struct option options[] = {
-		{"scrambled_bluetooth", 0, NULL, 0},
-		{"bluetooth", 0, NULL, 0},
+		{"scrambled_bluetooth", 0, NULL, 'B'},
+		{"bluetooth", 0, NULL, 'b'},
 		{"help", 0, NULL, 'h'},
 		{"device", 1, NULL, 'd'},
 		{"image", 1, NULL, 'i'},
+		{"ibase64", 1, NULL, 'a'},
 		{"output", 1, NULL, 'o'},
-		{"base64", 1, NULL, 'o'},
+		{"obase64", 0, NULL, 's'},
 		{"text", 1, NULL, 't'},
-		{"version", 0, NULL, 'v'},
+		{"version", 0, NULL, 'V'},
 		{NULL, 0, NULL, 0}
 	};
 
