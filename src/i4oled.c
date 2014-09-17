@@ -38,7 +38,6 @@
 
 #define OLED_WIDTH 64
 #define OLED_HEIGHT 32
-#define VER "1.3"
 #define SIZE 30
 #define MAGIC_BASE64 "base64:"
 #define MAGIC_BASE64_LEN strlen(MAGIC_BASE64)
@@ -470,7 +469,7 @@ out:
 
 static void i4oled_version(void)
 {
-	wprintf(L"%s\n", VER);
+	wprintf(L"%s\n", PACKAGE_VERSION);
 }
 
 static void i4oled_usage(void)
@@ -542,18 +541,18 @@ int main(int argc, char **argv)
 	int output_present = 0;
 	int base64_present = 0;
 	int device_present = 0;
-	int optidx;
 	struct params_s params;
 	struct option options[] = {
-		{"scrambled_bluetooth", 0, NULL, 0},
-		{"bluetooth", 0, NULL, 0},
+		{"scrambled_bluetooth", 0, NULL, 'B'},
+		{"bluetooth", 0, NULL, 'b'},
 		{"help", 0, NULL, 'h'},
 		{"device", 1, NULL, 'd'},
 		{"image", 1, NULL, 'i'},
+		{"ibase64", 1, NULL, 'a'},
 		{"output", 1, NULL, 'o'},
-		{"base64", 1, NULL, 'o'},
+		{"obase64", 0, NULL, 's'},
 		{"text", 1, NULL, 't'},
-		{"version", 0, NULL, 'v'},
+		{"version", 0, NULL, 'V'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -577,54 +576,8 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	while ((c = getopt_long(argc, argv, "Bbhd:i:a:o:st:V", options, &optidx)) != -1) {
+	while ((c = getopt_long(argc, argv, "Bbhd:i:a:o:st:V", options, NULL)) != -1) {
 		switch (c) {
-		case 0:
-			switch (optidx) {
-			case 0:
-				params.bt_flag = 2;
-				break;
-			case 1:
-				params.bt_flag = 1;
-				break;
-			case 2:
-				i4oled_usage();
-				ret = 0;
-				goto out;
-			case 3:
-				params.device_filename = argv[optind];
-				device_present++;
-				output_present++;
-				break;
-			case 4:
-				params.image_filename = argv[optind];
-				input_present++;
-				break;
-			case 5:
-				params.input_base64 = argv[optind];
-				input_present++;
-				break;
-			case 6:
-				params.output_filename = argv[optind];
-				output_present++;
-				break;
-			case 7:
-				base64_present++;
-				output_present++;
-				break;
-			case 8:
-				if (i4oled_acquire_text(&params, argv[optind])) {
-					ret = 1;
-					goto out;
-				}
-				input_present++;
-				break;
-			case 9:
-				i4oled_version();
-				ret = 0;
-				goto out;
-		}
-		break;
 		case 'B':
 			params.bt_flag = 2;
 			break;
