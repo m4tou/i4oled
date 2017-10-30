@@ -54,6 +54,7 @@ struct params_s {
 	char *output_filename;
 	char *input_base64;
 	unsigned char *image;
+	int lh_flag; /* 0 - default right handed, 1 - left handed */
 	wchar_t text[SIZE+1];
 };
 
@@ -261,6 +262,15 @@ int i4oled_render_text(struct params_s *params)
 	cr = cairo_create(surface);
 	cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.99);
 	cairo_paint(cr);
+
+	if(params->lh_flag>0)
+	{
+		cairo_move_to(cr, 0,0);
+		cairo_translate(cr,OLED_WIDTH/2, OLED_HEIGHT/2);
+		cairo_rotate(cr,M_PI);
+		cairo_translate(cr,-OLED_WIDTH/2, -OLED_HEIGHT/2);
+		cairo_fill(cr);
+	}
 
 	layout = pango_cairo_create_layout(cr);
 	pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
@@ -551,6 +561,7 @@ int main(int argc, char **argv)
 		{"ibase64", 1, NULL, 'a'},
 		{"output", 1, NULL, 'o'},
 		{"obase64", 0, NULL, 's'},
+		{"left_handed", 0, NULL, 'l'},
 		{"text", 1, NULL, 't'},
 		{"version", 0, NULL, 'V'},
 		{NULL, 0, NULL, 0}
@@ -568,6 +579,7 @@ int main(int argc, char **argv)
 	params.input_base64 = NULL;
 	params.output_filename = NULL;
 	params.image = malloc(USB_IMAGE_LEN);
+	params.lh_flag = 0;
 	params.text[0] = (wchar_t)0x0;
 
 	if (argc < 2) {
@@ -576,7 +588,7 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	while ((c = getopt_long(argc, argv, "Bbhd:i:a:o:st:V", options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "Bbhd:i:a:o:slt:V", options, NULL)) != -1) {
 		switch (c) {
 		case 'B':
 			params.bt_flag = 2;
@@ -604,6 +616,9 @@ int main(int argc, char **argv)
 		case 's':
 			base64_present++;
 			output_present++;
+			break;
+		case 'l':
+			params.lh_flag++;
 			break;
 		case 't':
 			if (i4oled_acquire_text(&params, argv[optind-1])) {
