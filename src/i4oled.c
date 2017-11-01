@@ -496,6 +496,7 @@ static void i4oled_usage(void)
 	L" -a, --ibase64			- base64 encoded string as input [i]\n"
 	L" -o, --output			- output png file [o]\n"
 	L" -s, --obase64			- output to base64 encoded string [o]\n"
+	L" -l, --left-handed			- Rotate text for left handed users\n"
 	L" -t, --text			- text string for convertsion into image [i]\n"
 	L" -V, --version			- version info\n\n"
 	L"[i] denotes input, [o] 	- output. Exactly one input and at least one output must be present\n");
